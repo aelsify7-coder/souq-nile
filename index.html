@@ -1018,7 +1018,10 @@ function trackHTML(m){const r=m.res;let out='';
 function waLink(o){const ph=String(o.cust.phone||'').replace(/\D/g,'').replace(/^00/,'').replace(/^0/,'20');
  const M={new:'تم استلام طلبك',preparing:'طلبك بيتجهّز دلوقتي',sent:'طلبك بيتجهّز دلوقتي',printing:'طلبك دلوقتي في الطباعة 🖨️',ready:'طلبك جاهز وهيخرج للشحن قريب 📦',shipped:'طلبك خرج للشحن وفي الطريق إليك 🚚',delivered:'تم تسليم طلبك ✅ شكراً لثقتك',cancelled:'للأسف طلبك اتلغى',returned:'تم استلام مرتجع طلبك'}[o.status]||'';
  const t='أهلاً '+o.cust.name+' 👋\nأوردر '+o.id+' ('+o.pname+')\n'+M+'\nتقدر تتابعه من هنا: '+location.origin+location.pathname+'?t='+encodeURIComponent(o.id)+'\n— سوق النيل';
- return 'https://wa.me/'+ph+'?text='+encodeURIComponent(t);}
+ const EN_=(window.LANG&&LANG()==='en');
+ if(EN_){const ME={new:'Your order has been received',preparing:'Your order is being prepared now',sent:'Your order is being prepared now',printing:'Your order is being printed now 🖨️',ready:'Your order is ready and will ship soon 📦',shipped:'Your order has shipped and is on its way to you 🚚',delivered:'Your order has been delivered ✅ Thank you for your trust',cancelled:'Unfortunately your order was cancelled',returned:'Your order return has been received'}[o.status]||'';
+  var t2='Hello '+o.cust.name+' 👋\nOrder '+o.id+' ('+o.pname+')\n'+ME+'\nYou can track it here: '+location.origin+location.pathname+'?t='+encodeURIComponent(o.id)+'\n— Souq El Nile';}
+ return 'https://wa.me/'+ph+'?text='+encodeURIComponent(EN_?t2:t);}
 const PAGES={
  about:['من نحن',()=>`<p>سوق النيل سوق مصري للأزياء بيجمع التجّار والمصممين والمطابع وشركات الشحن في مكان واحد، عشان توصلك قطعة حلوة بسعر عادل وبدون تعقيد.</p><p>التاجر بيحدد سعره، والمصمم بيكسب من كل قطعة تتطبع بتصميمه، واحنا بنظبط الطلب والتوصيل لحد باب بيتك.</p>`],
  returns:['الاستبدال والإرجاع',()=>`<p>تقدر ترجّع أو تستبدل القطعة خلال <b>${holdDays()} أيام</b> من تاريخ الاستلام، بشرط تكون زي ما استلمتها: غير مستخدمة وبحالتها الأصلية.</p><p>القطع المطبوعة بتصميم خاص بتتطبع عند الطلب، فبتتغيّر أو تترجّع بس لو فيها عيب تصنيع أو غلط عن اللي طلبته.</p><p>كلمنا على واتساب أو الإيميل في صفحة "تواصل معنا" وابعت رقم الطلب.</p>`],
@@ -1583,7 +1586,7 @@ async function sb(path,opt){
   if(!r.ok){const m=(j&&(j.message||j.msg||j.error_description||j.error))||('خطأ '+r.status);const er=new Error(m);er.status=r.status;throw er;}
   return j;
 }
-const mailOrder=o=>{try{if(o&&o.id&&o.cust&&o.cust.email)fetch('https://lszpjzrqogeyeupizscf.supabase.co/functions/v1/order-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:o.id})}).catch(()=>{});}catch(e){}};
+const mailOrder=o=>{try{if(o&&o.id&&o.cust&&o.cust.email)fetch('https://lszpjzrqogeyeupizscf.supabase.co/functions/v1/order-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:o.id,lang:(window.LANG&&LANG())||'ar'})}).catch(()=>{});}catch(e){}};
 const rpc=(fn,args)=>sb('/rest/v1/rpc/'+fn,{method:'POST',body:args||{}});
 const errMsg=e=>{const m=String(e&&e.message||e);
   if(/Invalid login/i.test(m))return 'الإيميل أو الباسورد غلط';
@@ -1834,12 +1837,28 @@ function tr(t,depth){
     const m=n.match(/^([^:：]{1,40}:)\s*(.*)$/);
     if(m){const lab=EN[m[1]];if(lab!==undefined){const r=tr(m[2],1);return lab+' '+(r!==null?r:m[2])}}
   }
+  if(known().has(n)){if(MT[n])return MT[n];sched(n,curNode);return null}
   if(!depth)window.__miss.add(k);return null;
 }
 const ATTR=['placeholder','title','aria-label','alt'];
 let busy=false;
+const MT=(()=>{try{return JSON.parse(localStorage.getItem('souq_mt')||'{}')}catch(e){return{}}})();
+let KN=null,KT=0,curNode=null;
+function known(){const now=Date.now();if(KN&&now-KT<400)return KN;const k=new Set();try{['products','merchants','resellers','designers','presses','ships','blanks'].forEach(c=>(S[c]||[]).forEach(o=>{if(o&&o.name)k.add(norm(o.name))}))}catch(e){}KN=k;KT=now;return k}
+const pend=new Map();let tmr,fails=0,run=false;
+function sched(n,node){if(!node||fails>3)return;let a=pend.get(n);if(!a){a=[];pend.set(n,a)}a.push(node);clearTimeout(tmr);tmr=setTimeout(flush,300)}
+const dec=t=>{const x=document.createElement('textarea');x.innerHTML=t;return x.value};
+async function flush(){
+  if(run)return;run=true;
+  try{for(const [n,nodes] of [...pend]){pend.delete(n);
+    try{const r=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(n)+'&langpair=ar|en');const j=await r.json();
+      let t=j&&j.responseData&&j.responseData.translatedText;
+      if(t&&String(j.responseStatus)==='200'&&!/MYMEMORY|QUERY LENGTH|INVALID/i.test(t)){t=dec(t);MT[n]=t;fails=0;try{localStorage.setItem('souq_mt',JSON.stringify(MT))}catch(e){}
+        nodes.forEach(nd=>{if(LANG==='en'&&nd.isConnected)txt(nd)})}else fails++;
+    }catch(e){fails++}}}finally{run=false;if(pend.size)setTimeout(flush,500)}
+}
 function txt(node){
-  const o=node.nodeValue;const r=tr(o);if(r===null)return;
+  const o=node.__o!==undefined?node.__o:node.nodeValue;curNode=node;const r=tr(o);curNode=null;if(r===null)return;
   const lead=o.match(/^\s*/)[0],trail=o.match(/\s*$/)[0];
   if(node.__o===undefined)node.__o=o;busy=true;node.nodeValue=lead+r+trail;busy=false;
 }
