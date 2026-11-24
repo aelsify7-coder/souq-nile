@@ -855,6 +855,9 @@ function draftForm(){
     <div class="row" style="margin-top:12px"><button class="btn alt" data-act="addcolor">+ لون تاني</button><button class="btn" data-act="addprod">${ui.editId?'حفظ التعديلات':'انشر المنتج'}</button>${ui.editId?'<button class="btn alt" data-act="canceledit">إلغاء التعديل</button>':''}</div>
   </div>`;
 }
+function lowStockHTML(mine){const out=[],low=[];mine.forEach(p=>{(p.variants||[]).forEach(v=>{const n=+v.stock||0,t=esc(p.name)+' ('+esc(cname(v.color))+(v.size?' · '+esc(v.size):'')+')';if(n<=0)out.push(t);else if(n<=2)low.push(t+' — باقي '+n);});});
+ if(!out.length&&!low.length)return '';
+ return `<section><div class="card" style="border:2px solid #b3261e;background:#fff4f2"><b>⚠️ تنبيه المخزون</b>${out.length?`<div style="margin-top:6px">🔴 خلصت (${out.length}): ${out.slice(0,6).join('، ')}${out.length>6?' ...':''}</div>`:''}${low.length?`<div style="margin-top:6px">🟠 على وشك الخلاص (${low.length}): ${low.slice(0,6).join('، ')}${low.length>6?' ...':''}</div>`:''}<div class="hint">حدّث الكميات من تعديل المنتج عشان ماتخسرش مبيعات.</div></div></section>`;}
 function viewMerchant(){
   const id=ui.m,owner='m:'+id,t=ui.tab.merchant;
   if(t==='wallet')return `<section>${walletCard(owner)}</section>${withdrawSection(owner)}`;
@@ -862,7 +865,7 @@ function viewMerchant(){
   if(t==='loc')return merchLocHTML();
   if(t==='prods'){
     const mine=S.products.filter(p=>p.m===id);
-    return `<section id="formtop"><h2>${ui.editId?'تعديل المنتج':'أضف منتج'}</h2>${draftForm()}</section>
+    return lowStockHTML(mine)+`<section id="formtop"><h2>${ui.editId?'تعديل المنتج':'أضف منتج'}</h2>${draftForm()}</section>
       <section><h2>منتجاتي</h2>${grid(mine,p=>`<div class="card plain"><div class="prod">${art(p)}<div><h3>${esc(p.name)}${vbadge(p.m)}</h3>${starsHTML(p.id)}<div class="meta">${CATS[p.cat]||''}</div><div class="meta num">سعرك ${money(p.price)}</div><div class="meta num">يظهر للمسوّق ${money(floorOf(p))}</div>${vmeta(p)}</div></div>
       <div class="row" style="margin-top:8px"><button class="btn sm" data-act="editprod" data-id="${p.id}">تعديل المنتج</button>${ui.confirmDel===p.id?`<span class="hint">متأكد من الحذف؟</span><button class="btn bad sm" data-act="delyes" data-id="${p.id}">نعم، احذف</button><button class="btn alt sm" data-act="delno">لا</button>`:`<button class="btn bad sm" data-act="delprod" data-id="${p.id}">حذف</button>`}</div>
       <label class="row" style="margin-top:8px;gap:8px;cursor:pointer"><input class="prt" type="checkbox" data-p="${p.id}" ${p.printable?'checked':''} style="width:auto"><span class="hint"><b>مناسب للطباعة</b> ${p.printable?'· ظاهر للمصممين':''}</span></label>
@@ -2615,4 +2618,3 @@ apply();
 
 </body>
 </html>
-<!-- v33 -->
