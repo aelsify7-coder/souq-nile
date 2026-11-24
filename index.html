@@ -391,7 +391,7 @@ function load(){try{const r=localStorage.getItem(KEY);if(r)return repairRaw(r);}
 let S={settings:{type:'fixed',value:10,ship:50},merchants:[],resellers:[],designers:[],ships:[],presses:[],products:[],listings:[],blanks:[],orders:[],withdrawals:[],notes:[],n:1,profiles:[]};
 const ui={ddMode:'design',pf:'designer',view:'admin',m:'m1',r:'r1',d:'d1',pr:'pr1',s:'s1',dd:newDD(),modal:null,tab:{admin:'over',merchant:'wallet',reseller:'cat',designer:'new',press:'orders',ship:'notes',courier:'avail'},filter:'all',cat:'all',draft:newDraft(),editId:null,confirmDel:null,scrollTo:null};
 
-const shares=o=>({t:r2((o.tU||0)*o.qty),m:r2(o.mU*o.qty),a:r2(o.fU*o.qty-(o.disc||0)-(o.cpay||0)),d:r2((o.dU||0)*o.qty),s:r2((o.sU||0)*o.qty),r:r2((o.unit-o.mU-(o.tU||0)-o.fU-(o.dU||0)-(o.sU||0))*o.qty)});
+const shares=o=>({t:r2((o.tU||0)*o.qty),m:r2(o.mU*o.qty),a:r2(o.fU*o.qty-(o.disc||0)-(o.cpay||0)+(o.dlv||0)),d:r2((o.dU||0)*o.qty),s:r2((o.sU||0)*o.qty),r:r2((o.unit-o.mU-(o.tU||0)-o.fU-(o.dU||0)-(o.sU||0))*o.qty)});
 const pressOwner=id=>{const p=S.presses.find(x=>x.id===id);return p&&p.designer?'d:'+p.designer:'p:'+id;};
 function ownerOf(o,owner){
   const s=shares(o);let v=0;
@@ -523,7 +523,7 @@ function orderCard(o,who){
     ${o.custom&&who!=='reseller'?`<div class="card plain" style="margin:6px 0;border:1px dashed var(--gold)"><b>✨ طلب خاص${o.ext?' · التيشيرت من عند المصمم':''}</b><div style="margin-top:4px;white-space:pre-wrap">${esc(o.brief||'')}</div>${o.ref?`<img class="dimg" style="width:140px;height:140px;margin-top:6px" src="${o.ref}" alt="مرجع">`:''}${o.ext&&o.size?`<div class="hint">المقاس: ${esc(o.size)}</div>`:''}</div>`:''}
     <div class="hint">${o.color?sw(o.color)+esc(cname(o.color))+' · المقاس '+esc(o.size):''}</div>
     <div class="hint num">${fmtDate(o.at)}</div>
-    <div class="hint num">${o.qty} × ${money(o.unit)} = ${money(o.unit*o.qty)}${o.disc>0?' − خصم '+money(o.disc)+' = '+money(o.unit*o.qty-o.disc)+(o.coupon?' ('+esc(o.coupon)+')':''):''} · ${who2} · ${o.rid?'مسوّق: '+esc(resName(o.rid)):'بيع مباشر'}</div>
+    <div class="hint num">${o.qty} × ${money(o.unit)} = ${money(o.unit*o.qty)}${o.disc>0?' − خصم '+money(o.disc)+' = '+money(o.unit*o.qty-o.disc)+(o.coupon?' ('+esc(o.coupon)+')':''):''}${o.dlv>0?' + توصيل '+money(o.dlv):''} · ${who2} · ${o.rid?'مسوّق: '+esc(resName(o.rid)):'بيع مباشر'}</div>
     ${(who==='ship'||(who==='merchant'&&o.tU&&o.status==='new'))&&pod?`<dl class="kv"><dt>${who==='ship'?'استلام من':'ابعت القطعة لـ'}</dt><dd>${esc(pressOf(o.pr).name)}</dd><dt>العنوان</dt><dd>${esc(pressOf(o.pr).addr)}</dd><dt>الموبايل</dt><dd class="num">${esc(pressOf(o.pr).phone||'—')}</dd>${who==='merchant'?`<dt>المطلوب</dt><dd>${o.qty} × ${esc(cname(o.color))} · مقاس ${esc(o.size)}</dd>`:''}</dl>`:''}
     ${who==='press'&&pod&&o.status==='new'&&o.tU?'<div class="hint">في انتظار التاجر يبعتلك القطعة.</div>':''}
     ${showCust?`<dl class="kv"><dt>العميل</dt><dd>${esc(o.cust.name)} · <span class="num">${esc(o.cust.phone)}</span></dd>${o.cust.email?`<dt>الإيميل</dt><dd dir="ltr" style="text-align:right">${esc(o.cust.email)}</dd>`:''}<dt>العنوان</dt><dd>${esc(o.cust.addr)}</dd><dt>الوقت المتاح</dt><dd>${esc(o.cust.time)}</dd></dl>`:''}
@@ -1005,7 +1005,7 @@ function myOrdersHTML(){
   if(!mine.length)return '';
   return `<section id="myorders"><h2>طلباتي</h2><div class="grid">${mine.map(o=>{
     const st=CSTAT[o.status]||['',''];
-    const tot=r2((o.unit||0)*(o.qty||1)-(o.disc||0));
+    const tot=r2((o.unit||0)*(o.qty||1)-(o.disc||0)+(o.dlv||0));
     return `<div class="card"><div class="row sp"><b>${esc(o.pname)}</b><span style="color:${st[1]};font-weight:700">${st[0]}</span></div>
     <div class="hint">${esc(o.id)} · ${o.qty||1} قطعة${o.size?' · مقاس '+esc(o.size):''} · ${fmtDate(o.at)}</div>
     <div style="margin-top:6px">الإجمالي: <b>${money(tot)}</b>${o.disc>0?` <span class="hint">(خصم ${money(o.disc)}${o.coupon?' · كود '+esc(o.coupon):''})</span>`:''} · الدفع عند الاستلام</div>${retBlock(o)}${proofBtns(o,'customer')}${canRet(o)?`<div class="row" style="margin-top:6px"><button class="btn alt sm" data-act="retopen" data-id="${esc(o.id)}">↩️ استرجاع الطلب</button></div>`:''}${o.status==='delivered'?`<div class="row" style="margin-top:6px">${[1,2,3,4,5].map(n=>`<button class="btn alt sm" data-act="rate" data-id="${o.pid}" data-n="${n}" aria-label="${n}">${'⭐'.repeat(n)}</button>`).join('')}</div>`:''}${journeyHTML(o,'customer')}</div>`;}).join('')}</div></section>`;
@@ -1076,13 +1076,16 @@ const saveCart=()=>{try{localStorage.setItem('cart_v1',JSON.stringify(CART));}ca
 function lineUnit(l){const p=prodById(l.pid);if(!p)return 0;const f=floorOf(p);if(l.rid){const li=S.listings.find(x=>x.r===l.rid&&x.p===l.pid);return Math.max(li?li.price:0,f);}return f;}
 const cartCount=()=>CART.reduce((a,l)=>a+l.qty,0);
 const cartTotal=()=>r2(CART.reduce((a,l)=>a+lineUnit(l)*l.qty,0));
+const dlvFee=()=>(S.settings&&S.settings.delivery!==undefined)?(Number(S.settings.delivery)||0):30;
+const lineDlv=l=>{const p=prodById(l.pid);return p&&!p.pod?dlvFee():0;};
+const cartDlv=()=>r2(CART.reduce((a,l)=>a+lineDlv(l),0));
 function cartFab(){return cartCount()?`<button class="cartfab" data-act="cartopen">🛒 السلة (${cartCount()}) · ${money(cartTotal())}</button>`:'';}
 function cartHTML(){
   ui.cf=ui.cf||{};const cf=ui.cf,pf=CL.profile||{};
   const v=(k,d)=>esc(cf[k]!==undefined?cf[k]:(d||''));
   const lines=CART.filter(l=>prodById(l.pid));
   return `<div class="ov" data-act="closeov"><div class="sheet" role="dialog" aria-label="السلة"><h2 style="margin-top:0">🛒 السلة</h2>
-  ${lines.length?lines.map((l,i)=>{const p=prodById(l.pid);return `<div class="cline"><div><b>${esc(p.name)}</b><div class="hint">${esc(cname(l.color))}${l.size?' · '+esc(l.size):''} · ${money(lineUnit(l))}</div></div><div class="row q"><button class="btn alt sm" data-act="cq" data-i="${i}" data-d="-1">−</button><b>${l.qty}</b><button class="btn alt sm" data-act="cq" data-i="${i}" data-d="1">+</button><button class="btn bad sm" data-act="cdel" data-i="${i}" aria-label="حذف">✕</button></div></div>`;}).join('')+`<div style="margin:8px 0"><div class="row" style="gap:6px"><input id="c-coupon" dir="ltr" placeholder="كود خصم (اختياري)" value="${v('coupon')}" style="flex:1"><button class="btn alt sm" data-act="cpapply">تطبيق</button></div>${V3.cq&&V3.cq.ok===false&&V3.cq.msg?`<div class="hint" style="color:#a33">${esc(V3.cq.msg)}</div>`:''}${cartDisc()>0?`<div class="hint" style="color:#2d7a4f;font-weight:700;margin-top:4px">🎉 خصم ${money(cartDisc())}${V3.cq.code?' (كود '+esc(V3.cq.code)+')':''}${V3.cq.deal?' (يشمل العرض)':''}</div>`:''}<b>الإجمالي: ${money(r2(cartTotal()-cartDisc()))}</b> <span class="hint">· الدفع عند الاستلام</span></div>
+  ${lines.length?lines.map((l,i)=>{const p=prodById(l.pid);return `<div class="cline"><div><b>${esc(p.name)}</b><div class="hint">${esc(cname(l.color))}${l.size?' · '+esc(l.size):''} · ${money(lineUnit(l))}</div></div><div class="row q"><button class="btn alt sm" data-act="cq" data-i="${i}" data-d="-1">−</button><b>${l.qty}</b><button class="btn alt sm" data-act="cq" data-i="${i}" data-d="1">+</button><button class="btn bad sm" data-act="cdel" data-i="${i}" aria-label="حذف">✕</button></div></div>`;}).join('')+`<div style="margin:8px 0"><div class="row" style="gap:6px"><input id="c-coupon" dir="ltr" placeholder="كود خصم (اختياري)" value="${v('coupon')}" style="flex:1"><button class="btn alt sm" data-act="cpapply">تطبيق</button></div>${V3.cq&&V3.cq.ok===false&&V3.cq.msg?`<div class="hint" style="color:#a33">${esc(V3.cq.msg)}</div>`:''}${cartDisc()>0?`<div class="hint" style="color:#2d7a4f;font-weight:700;margin-top:4px">🎉 خصم ${money(cartDisc())}${V3.cq.code?' (كود '+esc(V3.cq.code)+')':''}${V3.cq.deal?' (يشمل العرض)':''}</div>`:''}${cartDlv()>0?`<div class="hint">رسوم التوصيل ${money(cartDlv())} (على كل طلب ${money(dlvFee())})</div>`:''}<b>الإجمالي: ${money(r2(cartTotal()-cartDisc()+cartDlv()))}</b> <span class="hint">· الدفع عند الاستلام</span></div>
   <div class="form"><label>الاسم<input id="c-name" value="${v('c-name',pf.name)}"></label><label>رقم الموبايل<input id="c-phone" inputmode="tel" placeholder="01012345678" value="${v('c-phone',pf.phone)}"></label>
   <label>المحافظة<select id="c-gov"><option value="">اختار المحافظة</option>${GOVS.map(g=>`<option ${cf['c-gov']===g?'selected':''}>${g}</option>`).join('')}</select></label>
   <label>الوقت المتاح<input id="c-time" placeholder="مثلاً بعد 5 مساءً" value="${v('c-time')}"></label>
@@ -1183,7 +1186,8 @@ function updateSum(){
   const qty=Math.max(1,parseInt($('#o-qty').value)||1);
   const unit=m.mode==='reseller'?(parseFloat($('#o-price').value)||0):m.price;
   const prof=r2((unit-f)*qty);
-  $('#o-sum').innerHTML=`الإجمالي على العميل: <b class="num">${money(unit*qty)}</b>`+(m.mode==='reseller'?` · ربحك: <b class="num">${money(prof)}</b>`:'');
+  const dl=p.pod?0:dlvFee();
+  $('#o-sum').innerHTML=`${dl>0?'رسوم التوصيل '+money(dl)+' · ':''}الإجمالي على العميل: <b class="num">${money(unit*qty+dl)}</b>`+(m.mode==='reseller'?` · ربحك: <b class="num">${money(prof)}</b>`:'');
 }
 
 /* ---------- actions ---------- */
@@ -1435,7 +1439,7 @@ function act(a,d,e){
   else if(a==='mesave'){const ad=(document.getElementById('ml-addr')||{value:''}).value.trim();if(ad.length<5){toast('اكتب العنوان بالتفصيل');return;}
     rpc('set_place',{p_lat:MP.lat,p_lng:MP.lng,p_addr:ad}).then(()=>{MP.addr=ad;toast('اتحفظ موقع المحل ✓');render();}).catch(er=>toast(errMsg(er)));return;}
   else if(a==='ccsave'){const n=i=>Math.max(0,parseFloat((document.getElementById(i)||{value:0}).value)||0);
-    S.settings=Object.assign({},S.settings,{courier:{base:n('cc-base'),perKm:n('cc-km'),min:n('cc-min'),max:Math.max(n('cc-max'),n('cc-min'))}});save();toast('اتحفظ أجر المندوب ✓');}
+    S.settings=Object.assign({},S.settings,{delivery:n('cc-dlv'),courier:{base:n('cc-base'),perKm:n('cc-km'),min:n('cc-min'),max:Math.max(n('cc-max'),n('cc-min'))}});save();toast('اتحفظ أجر المندوب ✓');}
   else if(a==='cosus'){sb('/rest/v1/profiles?id=eq.'+d.id,{method:'PATCH',headers:{Prefer:'return=minimal'},body:{approved:d.on==='1'}}).then(()=>{toast(d.on==='1'?'اتفعّل المندوب':'اتوقف المندوب');CL.known={};AC.ld=false;AC.list=null;refreshNow();}).catch(er=>toast(errMsg(er)));return;}
   else if(a==='cosettle'){const v=parseFloat((document.getElementById('cs-'+d.id)||{value:''}).value);if(!v){toast('اكتب المبلغ');return;}
     rpc('admin_courier_settle',{p_uid:d.id,p_amount:v}).then(()=>{toast('اتسجّل التوريد ✓');AC.ld=false;AC.list=null;render();}).catch(er=>toast(errMsg(er)));return;}
@@ -1957,8 +1961,9 @@ function adminCourierHTML(){
   const c=CCFG(),L=AC.list;
   return `<section><h2>🛵 أجر المندوب بالمسافة</h2><div class="card"><div class="form">
     <label>مبلغ أساسي (${CUR})<input id="cc-base" type="number" min="0" value="${c.base}"></label><label>لكل كم (${CUR})<input id="cc-km" type="number" min="0" step="0.5" value="${c.perKm}"></label>
+    <label>رسوم التوصيل على العميل (لكل طلب)<input id="cc-dlv" type="number" min="0" value="${dlvFee()}"></label>
     <label>أقل أجر<input id="cc-min" type="number" min="0" value="${c.min}"></label><label>أعلى أجر<input id="cc-max" type="number" min="0" value="${c.max}"></label></div>
-    <div class="row sp" style="margin-top:10px"><span class="hint">الأجر = الأساسي + (الكم × سعر الكم) بين التاجر والعميل، محصور بين الأقل والأعلى. بيتخصم من حصة المنصة، وبيسري على الأوردرات الجديدة اللي المندوب بيستلمها.</span><button class="btn" data-act="ccsave">حفظ</button></div></div></section>
+    <div class="row sp" style="margin-top:10px"><span class="hint">الأجر = الأساسي + (الكم × سعر الكم) بين التاجر والعميل، محصور بين الأقل والأعلى. رسوم التوصيل بتتضاف على العميل وبتروح للمنصة، والمنصة هي اللي بتدفع أجر المندوب. بتسري على الأوردرات الجديدة.</span><button class="btn" data-act="ccsave">حفظ</button></div></div></section>
   <section><h2>المناديب</h2>${L===null?'<div class="empty">⏳ بنحمّل...</div>':(L.length?L.map(x=>`<div class="card plain" style="margin:8px 0"><div class="row sp"><b>${esc(x.name||'—')}</b><span class="pill ${x.approved?'s-delivered':'s-new'}">${x.approved?'معتمد':'بانتظار الموافقة'}</span></div>
     <dl class="kv"><dt>الموبايل</dt><dd class="num">${esc(x.phone||'')}</dd><dt>الإيميل</dt><dd dir="ltr">${esc(x.email||'')}</dd><dt>الرقم القومي</dt><dd class="num" dir="ltr">${esc(x.nid||'')}</dd><dt>توصيلات</dt><dd>${x.delivered}</dd><dt>عهدة كاش عليه</dt><dd><b>${money(x.owed)}</b></dd></dl>
     <div class="row" style="margin-top:6px"><button class="btn alt sm" data-act="showph" data-b="ids" data-p="${esc(x.id_path)}" data-t="بطاقة ${esc(x.name||'')}">🪪 صورة البطاقة</button>${x.approved?`<button class="btn bad sm" data-act="cosus" data-id="${x.uid}" data-on="0">إيقاف</button>`:`<button class="btn good sm" data-act="cosus" data-id="${x.uid}" data-on="1">موافقة وتفعيل</button>`}</div>
