@@ -1972,18 +1972,10 @@ function adminCourierHTML(){
     <div class="row" style="margin-top:6px"><button class="btn alt sm" data-act="showph" data-b="ids" data-p="${esc(x.id_path)}" data-t="بطاقة ${esc(x.name||'')}">🪪 صورة البطاقة</button>${x.approved?`<button class="btn bad sm" data-act="cosus" data-id="${x.uid}" data-on="0">إيقاف</button>`:`<button class="btn good sm" data-act="cosus" data-id="${x.uid}" data-on="1">موافقة وتفعيل</button>`}</div>
     ${x.approved?`<div class="row" style="margin-top:6px"><input id="cs-${x.uid}" type="number" placeholder="مبلغ ورّده (ج)" style="width:140px"><button class="btn sm" data-act="cosettle" data-id="${x.uid}">سجّل توريد</button></div>`:''}</div>`).join(''):'<div class="empty">لسه مفيش مناديب سجّلوا.</div>')}</section>`;}
 
-/* ===== LIVE TRACKING MAP ===== */
-const LV={z:0,ox:0,oy:0,W:0,H:0};
+/* ===== LIVE TRACKING MAP v2 (interactive) ===== */
 function mpx(lat,lng,z){const s=256*Math.pow(2,z),r=lat*Math.PI/180;return [(lng+180)/360*s,(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*s];}
-function liveFit(pts){const W=Math.min(360,(window.innerWidth||360)-56),H=300;let z=17;
-  for(;z>8;z--){const q=pts.map(p=>mpx(p[0],p[1],z)),xs=q.map(a=>a[0]),ys=q.map(a=>a[1]);if(Math.max(...xs)-Math.min(...xs)<=W-100&&Math.max(...ys)-Math.min(...ys)<=H-100)break;}
-  const q=pts.map(p=>mpx(p[0],p[1],z)),xs=q.map(a=>a[0]),ys=q.map(a=>a[1]);
-  LV.z=z;LV.W=W;LV.H=H;LV.ox=(Math.max(...xs)+Math.min(...xs))/2-W/2;LV.oy=(Math.max(...ys)+Math.min(...ys))/2-H/2;}
-const lvPos=(lat,lng)=>{const p=mpx(lat,lng,LV.z);return [Math.max(18,Math.min(LV.W-18,p[0]-LV.ox)),Math.max(18,Math.min(LV.H-18,p[1]-LV.oy))];};
-function liveTiles(){const n=Math.pow(2,LV.z),x0=Math.floor(LV.ox/256),x1=Math.floor((LV.ox+LV.W)/256),y0=Math.floor(LV.oy/256),y1=Math.floor((LV.oy+LV.H)/256);let h='';
-  for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){if(y<0||y>=n)continue;const xx=((x%n)+n)%n;h+=`<img alt="" referrerpolicy="origin" src="https://tile.openstreetmap.org/${LV.z}/${xx}/${y}.png" style="position:absolute;left:${Math.round(x*256-LV.ox)}px;top:${Math.round(y*256-LV.oy)}px;width:256px;height:256px">`;}return h;}
 const kmJS=(a,b,c,d)=>{const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h));};
-function lvMark(id,ic,lb,pos,col,big){return `<div id="${id}" style="z-index:2;position:absolute;left:${pos[0]}px;top:${pos[1]}px;transform:translate(-50%,-100%);transition:left 1s linear,top 1s linear;text-align:center;pointer-events:none"><div style="width:${big?46:40}px;height:${big?46:40}px;border-radius:50%;background:#fff;border:3px solid ${col};display:flex;align-items:center;justify-content:center;font-size:${big?26:22}px;box-shadow:0 2px 8px #0004;margin:auto">${ic}</div><div style="font-size:11px;font-weight:700;color:#111;background:#fffe;border-radius:6px;padding:0 4px;margin-top:2px">${lb}</div></div>`;}
+const lvTarget=d=>(d.status==='preparing'||d.status==='ready')?d.shop:d.home;
 function lvStatus(d,m){
   if(!d||!d.ok)return 'مش قادرين نعرض التتبع للأوردر ده.';
   if(!d.hasCourier)return d.status==='delivered'?'تم التسليم للعميل ✓':'لسه مفيش مندوب استلم الأوردر.';
@@ -1999,42 +1991,111 @@ function lvStatus(d,m){
   }
   else if(!d.courier)s+=' · بنستنى إشارة المندوب...';
   return s;}
+const LVB='display:flex;align-items:center;justify-content:center;width:38px;height:38px;border:0;border-radius:10px;background:#fff;color:#111;font-size:20px;font-weight:700;box-shadow:0 1px 6px #0006;cursor:pointer;margin-bottom:6px';
 function liveHTML(m){
   const d=m.d;
-  return `<div class="ov" data-act="closeov"><div class="sheet" role="dialog" aria-label="تتبع مباشر"><h2 style="margin-top:0">🗺️ تتبع الأوردر ${esc(m.id)}</h2>
+  return `<div class="ov" data-act="closeov"><div class="sheet" role="dialog" aria-label="تتبع مباشر" style="max-width:620px"><h2 style="margin-top:0">🗺️ تتبع الأوردر ${esc(m.id)}</h2>
   <div id="lv-t" style="font-weight:700;margin-bottom:8px">${m.d?esc(lvStatus(d,m)):'⏳ بنحمّل...'}</div>
-  ${m.fit?`<div id="lv-map" style="position:relative;width:${LV.W}px;height:${LV.H}px;max-width:100%;margin:auto;overflow:hidden;border-radius:14px;background:#e6e1d4;border:1px solid var(--gold)">${m.tiles}
-    ${d.shop?lvMark('lv-s','🏪','المحل',lvPos(d.shop.lat,d.shop.lng),'#2f6f8f'):''}${d.home?lvMark('lv-h','🏠','البيت',lvPos(d.home.lat,d.home.lng),'#2d7a4f'):''}${d.courier?lvMark('lv-c','🛵','المندوب',lvPos(d.courier.lat,d.courier.lng),'#c1121f',true):''}
-    <svg id="lv-svg" width="${LV.W}" height="${LV.H}" style="position:absolute;left:0;top:0;pointer-events:none"><polyline id="lv-r" points="${lvLine(m)}" fill="none" stroke="#1a73e8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".85" ${m.rpts?'':'stroke-dasharray="2 9"'}/></svg>
-    <div style="position:absolute;bottom:2px;left:4px;font-size:9px;color:#111;background:#fffc;padding:0 3px;border-radius:3px">© OpenStreetMap</div></div>
+  ${m.fit?`<div id="lv-map" dir="ltr" style="position:relative;width:100%;height:min(62vh,420px);margin:auto;overflow:hidden;border-radius:14px;background:#e6e1d4;border:1px solid var(--gold);touch-action:none;user-select:none;-webkit-user-select:none">
+    <div id="lv-w" style="position:absolute;left:0;top:0;will-change:transform"><div id="lv-tl"></div><svg style="position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none"><polyline id="lv-r" fill="none" stroke="#1a73e8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg><div id="lv-mk"></div></div>
+    <div style="position:absolute;right:8px;top:8px;z-index:6"><button type="button" style="${LVB}" onclick="lvZ(1)" aria-label="تكبير">＋</button><button type="button" style="${LVB}" onclick="lvZ(-1)" aria-label="تصغير">－</button><button type="button" style="${LVB}" onclick="lvFollow()" aria-label="تتبّع المندوب" title="تتبّع المندوب">🎯</button><button type="button" style="${LVB}" onclick="lvAll()" aria-label="عرض الكل" title="عرض الكل">⛶</button></div>
+    <div style="position:absolute;bottom:2px;left:4px;font-size:9px;color:#111;background:#fffc;padding:0 3px;border-radius:3px;z-index:6">© OpenStreetMap</div>
+    <img alt="" width="1" height="1" style="position:absolute;opacity:0" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" onload="lvInit()"></div>
   ${d.home?'':'<div class="hint" style="margin-top:6px">العميل ماحددش موقع التوصيل على الخريطة، فالبيت مش ظاهر.</div>'}`:(m.d&&m.d.ok&&m.d.hasCourier?'<div class="hint">لسه مفيش مواقع كفاية للعرض على الخريطة. هنحدّث تلقائي.</div>':'')}
-  <div class="hint" style="margin-top:6px">بيتحدّث مباشرة كل ثانية. الخط الأزرق هو أقصر طريق بالعربية للمندوب.</div>
+  <div class="hint" style="margin-top:6px">بيتحدّث مباشرة كل ثانية · كبّر وصغّر وحرّك الخريطة بإيدك · الخط الأزرق أقصر طريق بالعربية.</div>
   <div class="row" style="margin-top:10px"><button class="btn alt" data-act="closemodal">إغلاق</button></div></div></div>`;}
-function lvLine(m){
-  const d=m.d||{};
-  if(m.rpts)return m.rpts.map(q=>{const p=lvPos(q[0],q[1]);return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ');
-  const t=lvTarget(d);if(d.courier&&t){const a=lvPos(d.courier.lat,d.courier.lng),b=lvPos(t.lat,t.lng);return a[0]+','+a[1]+' '+b[0]+','+b[1];}
-  return '';}
-const lvTarget=d=>(d.status==='preparing'||d.status==='ready')?d.shop:d.home;
+function lvM(){const m=ui.modal;return(m&&m.mode==='live')?m:null;}
+function lvFitPts(m,pts){const el=document.getElementById('lv-map');const W=el?el.clientWidth:340,H=el?el.clientHeight:300;let z=17;
+  for(;z>5;z--){const q=pts.map(p=>mpx(p[0],p[1],z)),xs=q.map(a=>a[0]),ys=q.map(a=>a[1]);if(Math.max(...xs)-Math.min(...xs)<=W-120&&Math.max(...ys)-Math.min(...ys)<=H-120)break;}
+  const q=pts.map(p=>mpx(p[0],p[1],z)),xs=q.map(a=>a[0]),ys=q.map(a=>a[1]);m.z=z;m.cx=(Math.max(...xs)+Math.min(...xs))/2;m.cy=(Math.max(...ys)+Math.min(...ys))/2;}
+function lvPts(d){const p=[];['shop','home','courier'].forEach(k=>{if(d&&d[k])p.push([d[k].lat,d[k].lng]);});if(p.length===1)p.push([p[0][0]+0.004,p[0][1]+0.004]);return p;}
+function lvInit(){
+  const m=lvM();if(!m||!m.d)return;const el=document.getElementById('lv-map');if(!el)return;
+  if(m.z==null){lvFitPts(m,lvPts(m.d));m.follow=false;}
+  m.tz=null;m.tset={};m.mk={};
+  if(!el._b){el._b=1;lvBind(el);}
+  lvDraw(m,true);}
+function lvBind(el){
+  const ptr={};let last=0;
+  el.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;try{el.setPointerCapture(e.pointerId);}catch(_){}ptr[e.pointerId]=[e.clientX,e.clientY];last=0;});
+  el.addEventListener('pointermove',e=>{const m=lvM();if(!m||!ptr[e.pointerId])return;const ids=Object.keys(ptr);const o=ptr[e.pointerId];
+    if(ids.length===1){m.cx-=e.clientX-o[0];m.cy-=e.clientY-o[1];m.follow=false;ptr[e.pointerId]=[e.clientX,e.clientY];lvDraw(m,true);}
+    else{const o2=ptr[ids.find(i=>i!=e.pointerId)];const d0=Math.hypot(o[0]-o2[0],o[1]-o2[1]);ptr[e.pointerId]=[e.clientX,e.clientY];const d1=Math.hypot(e.clientX-o2[0],e.clientY-o2[1]);
+      last+=Math.log2(d1/Math.max(1,d0));if(last>0.6){last=0;lvZ(1);}else if(last<-0.6){last=0;lvZ(-1);}}});
+  const up=e=>{delete ptr[e.pointerId];};el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
+  let wt=0;el.addEventListener('wheel',e=>{e.preventDefault();const n=Date.now();if(n-wt<180)return;wt=n;lvZ(e.deltaY<0?1:-1);},{passive:false});}
+function lvZ(dz){const m=lvM();if(!m||m.z==null)return;const nz=Math.max(5,Math.min(19,m.z+dz));if(nz===m.z)return;const f=Math.pow(2,nz-m.z);m.cx*=f;m.cy*=f;m.z=nz;lvDraw(m,true);}
+function lvFollow(){const m=lvM();if(!m||!m.d||!m.d.courier)return;m.follow=true;if(m.z<16)m.z=16;lvDraw(m,true);}
+function lvAll(){const m=lvM();if(!m||!m.d)return;m.follow=false;lvFitPts(m,lvPts(m.d));lvDraw(m,true);}
+/* snap courier to the route and trim the part already passed */
+function lvSnap(m,c){
+  const r=m.rpts;if(!r||r.length<2||!c)return null;const k=Math.cos(c.lat*Math.PI/180);
+  let best=null;
+  for(let i=0;i<r.length-1;i++){const ax=r[i][1]*k,ay=r[i][0],bx=r[i+1][1]*k,by=r[i+1][0],px=c.lng*k,py=c.lat;
+    const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy;let t=l?((px-ax)*dx+(py-ay)*dy)/l:0;t=Math.max(0,Math.min(1,t));
+    const qx=ax+dx*t,qy=ay+dy*t,dd=(px-qx)**2+(py-qy)**2;if(!best||dd<best.dd)best={dd,i,t,lat:qy,lng:qx/k};}
+  if(!best||Math.sqrt(best.dd)*111320>60)return null;
+  return {lat:best.lat,lng:best.lng,rest:[[best.lat,best.lng]].concat(r.slice(best.i+1))};}
+function lvBearing(a,b){const r=Math.PI/180,y=Math.sin((b[1]-a[1])*r)*Math.cos(b[0]*r),x=Math.cos(a[0]*r)*Math.sin(b[0]*r)-Math.sin(a[0]*r)*Math.cos(b[0]*r)*Math.cos((b[1]-a[1])*r);return (Math.atan2(y,x)/r+360)%360;}
+function lvMk(m,id,html,wx,wy,smooth,anchor){
+  const w=document.getElementById('lv-mk');if(!w)return null;let e=document.getElementById(id);
+  if(!e){e=document.createElement('div');e.id=id;e.style.cssText='position:absolute;pointer-events:none;text-align:center;z-index:'+(id==='lv-bk'?4:3);w.appendChild(e);}
+  e.style.transition=smooth?'left 1s linear,top 1s linear':'none';
+  e.style.left=wx.toFixed(1)+'px';e.style.top=wy.toFixed(1)+'px';e.style.transform=anchor;if(html!==null&&e._h!==html){e.innerHTML=html;e._h=html;}return e;}
+const LVE='font-size:34px;line-height:34px;filter:drop-shadow(0 2px 3px #0008)';
+const LVL='display:inline-block;font:700 11px/14px system-ui,sans-serif;color:#111;background:#fffe;border-radius:6px;padding:0 5px;margin-top:1px';
+function lvDraw(m,instant){
+  const el=document.getElementById('lv-map'),wl=document.getElementById('lv-w');if(!el||!wl||m.z==null||!m.d)return;
+  const d=m.d,z=m.z,W=el.clientWidth,H=el.clientHeight;
+  const P=o=>o?mpx(o.lat,o.lng,z):null;
+  let cp=d.courier?{lat:d.courier.lat,lng:d.courier.lng}:null,rest=null;
+  const sn=cp?lvSnap(m,cp):null;if(sn){cp={lat:sn.lat,lng:sn.lng};rest=sn.rest;}
+  const smooth=!instant&&m.tz===z;
+  if(m.follow&&cp){const q=mpx(cp.lat,cp.lng,z);m.cx=q[0];m.cy=q[1];}
+  wl.style.transition=(m.follow&&smooth)?'transform 1s linear':'none';
+  wl.style.transform='translate('+(W/2-m.cx).toFixed(1)+'px,'+(H/2-m.cy).toFixed(1)+'px)';
+  /* tiles */
+  const n=Math.pow(2,z);if(m.tz!==z||Object.keys(m.tset||{}).length>160){document.getElementById('lv-tl').innerHTML='';m.tset={};}
+  m.tz=z;const x0=Math.floor((m.cx-W/2-128)/256),x1=Math.floor((m.cx+W/2+128)/256),y0=Math.floor((m.cy-H/2-128)/256),y1=Math.floor((m.cy+H/2+128)/256);
+  const tl=document.getElementById('lv-tl');
+  for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){if(y<0||y>=n)continue;const k=x+'_'+y;if(m.tset[k])continue;m.tset[k]=1;const xx=((x%n)+n)%n,im=document.createElement('img');im.alt='';im.referrerPolicy='origin';im.draggable=false;im.src='https://tile.openstreetmap.org/'+z+'/'+xx+'/'+y+'.png';im.style.cssText='position:absolute;width:256px;height:256px;left:'+(x*256)+'px;top:'+(y*256)+'px;pointer-events:none';tl.appendChild(im);}
+  /* route */
+  const rl=document.getElementById('lv-r');
+  if(rl){let pts=rest||(m.rpts?m.rpts:null);if(!pts&&cp){const t=lvTarget(d);if(t)pts=[[cp.lat,cp.lng],[t.lat,t.lng]];}
+    rl.setAttribute('points',pts?pts.map(a=>{const q=mpx(a[0],a[1],z);return q[0].toFixed(1)+','+q[1].toFixed(1);}).join(' '):'');
+    if(m.rpts)rl.removeAttribute('stroke-dasharray');else rl.setAttribute('stroke-dasharray','2 12');}
+  /* markers */
+  const pin=(id,ic,lb,o)=>{if(!o)return;const q=P(o);lvMk(m,id,'<div style="'+LVE+'">'+ic+'</div><div style="'+LVL+'">'+lb+'</div>',q[0],q[1],false,'translate(-50%,-85%)');};
+  pin('lv-s','🏪',d.pod?'المطبعة':'المحل',d.shop);pin('lv-h','🏠','البيت',d.home);
+  if(cp){const q=mpx(cp.lat,cp.lng,z);
+    let ang=m.ang==null?0:m.ang;const t=lvTarget(d);let tgt=null;
+    if(rest&&rest.length>1){let acc=0;tgt=rest[1];for(let i=1;i<rest.length;i++){tgt=rest[i];if(kmJS(rest[0][0],rest[0][1],tgt[0],tgt[1])>0.02)break;}}
+    else if(m.prev&&kmJS(m.prev.lat,m.prev.lng,cp.lat,cp.lng)>0.003)tgt=[cp.lat,cp.lng],m._from=[m.prev.lat,m.prev.lng];
+    let b=null;if(rest&&tgt)b=lvBearing(rest[0],tgt);else if(tgt&&m._from)b=lvBearing(m._from,tgt);else if(t&&!rest)b=lvBearing([cp.lat,cp.lng],[t.lat,t.lng]);
+    if(b!=null){const east=b<180;m.east=east;let a=east?b-90:b-270;if(m.ra==null)m.ra=a;let df=((a-m.ra+540)%360)-180;m.ra+=df;}
+    const east=m.east===true,ra=(m.ra||0);
+    const tr='rotate('+ra.toFixed(1)+'deg)'+(east?' scaleX(-1)':'');
+    const html='<div id="lv-bi" style="'+LVE+';font-size:42px;line-height:42px;transition:transform .6s linear;transform:'+tr+'">🛵</div><div style="'+LVL+'">المندوب</div>';
+    const e=lvMk(m,'lv-bk',null,q[0],q[1],smooth,'translate(-50%,-50%)');
+    if(e){if(!e._i){e.innerHTML=html;e._i=1;}const bi=document.getElementById('lv-bi');if(bi){bi.style.transform=tr;}}
+    m.prev=m.prev&&kmJS(m.prev.lat,m.prev.lng,cp.lat,cp.lng)<0.003?m.prev:{lat:cp.lat,lng:cp.lng};}
+  const tx=document.getElementById('lv-t');if(tx)tx.textContent=lvStatus(d,m);}
 function lvRoute(m,d){
   const t=lvTarget(d);if(!d.courier||!t||m.rbusy)return;
   const now=Date.now();if(now-(m.rat||0)<10000)return;m.rat=now;m.rbusy=true;
   const u='https://router.project-osrm.org/route/v1/driving/'+d.courier.lng+','+d.courier.lat+';'+t.lng+','+t.lat+'?overview=full&geometries=geojson';
   fetch(u).then(r=>r.json()).then(j=>{m.rbusy=false;if(ui.modal!==m)return;const r=j&&j.routes&&j.routes[0];if(!r)return;
-    m.rpts=r.geometry.coordinates.map(c=>[c[1],c[0]]);m.rkm=r.distance/1000;m.rmin=r.duration/60;lvDraw(m);}).catch(()=>{m.rbusy=false;});}
-function lvDraw(m){const r=document.getElementById('lv-r');if(r){r.setAttribute('points',lvLine(m));if(m.rpts)r.removeAttribute('stroke-dasharray');}
-  const t=document.getElementById('lv-t');if(t&&m.d)t.textContent=lvStatus(m.d,m);}
+    m.rpts=r.geometry.coordinates.map(c=>[c[1],c[0]]);m.rkm=r.distance/1000;m.rmin=r.duration/60;lvDraw(m,false);}).catch(()=>{m.rbusy=false;});}
 function liveApply(m,d){
-  const pts=[];['shop','home','courier'].forEach(k=>{if(d[k])pts.push([d[k].lat,d[k].lng]);});
-  const first=!m.fit&&pts.length>=1&&d.ok&&d.hasCourier;
-  if(m.d&&m.d.status!==d.status){m.rpts=null;m.rkm=null;m.rmin=null;m.rat=0;}
+  if(m.d&&m.d.status!==d.status){m.rpts=null;m.rkm=null;m.rmin=null;m.rat=0;m.prev=null;}
+  const first=!m.fit&&d.ok&&d.hasCourier&&lvPts(d).length>0;
+  const had=!!(m.d&&m.d.courier);
   m.d=d;
-  if(first){liveFit(pts.length>1?pts:[pts[0],[pts[0][0]+0.004,pts[0][1]+0.004]]);m.tiles=liveTiles();m.fit=true;render();lvRoute(m,d);return;}
-  const c=document.getElementById('lv-c');
-  if(c&&d.courier){const p=lvPos(d.courier.lat,d.courier.lng);c.style.left=p[0]+'px';c.style.top=p[1]+'px';}
-  else if(!c&&m.fit&&d.courier){render();}
-  else if(!m.fit){render();return;}
-  lvRoute(m,d);lvDraw(m);}
+  if(first){m.fit=true;m.follow=false;lvFitPts(m,lvPts(d));render();return;}
+  if(!m.fit){render();return;}
+  if(!document.getElementById('lv-map')){render();return;}
+  if(d.courier&&!had){lvAll();}
+  lvDraw(m,false);lvRoute(m,d);}
 function livePoll(m){
   let busy=false;
   const go=()=>{if(ui.modal!==m||busy)return;busy=true;rpc('order_live',{p_id:m.id}).then(d=>{busy=false;if(ui.modal!==m)return;liveApply(m,d||{ok:false});}).catch(()=>{busy=false;});};
@@ -2345,4 +2406,4 @@ apply();
 
 </body>
 </html>
-<!-- v28b -->
+<!-- v29b -->
