@@ -1981,9 +1981,9 @@ function liveFit(pts){const W=Math.min(360,(window.innerWidth||360)-56),H=300;le
   LV.z=z;LV.W=W;LV.H=H;LV.ox=(Math.max(...xs)+Math.min(...xs))/2-W/2;LV.oy=(Math.max(...ys)+Math.min(...ys))/2-H/2;}
 const lvPos=(lat,lng)=>{const p=mpx(lat,lng,LV.z);return [Math.max(18,Math.min(LV.W-18,p[0]-LV.ox)),Math.max(18,Math.min(LV.H-18,p[1]-LV.oy))];};
 function liveTiles(){const n=Math.pow(2,LV.z),x0=Math.floor(LV.ox/256),x1=Math.floor((LV.ox+LV.W)/256),y0=Math.floor(LV.oy/256),y1=Math.floor((LV.oy+LV.H)/256);let h='';
-  for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){if(y<0||y>=n)continue;const xx=((x%n)+n)%n;h+=`<img alt="" referrerpolicy="no-referrer" src="https://tile.openstreetmap.org/${LV.z}/${xx}/${y}.png" style="position:absolute;left:${Math.round(x*256-LV.ox)}px;top:${Math.round(y*256-LV.oy)}px;width:256px;height:256px">`;}return h;}
+  for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){if(y<0||y>=n)continue;const xx=((x%n)+n)%n;h+=`<img alt="" referrerpolicy="origin" src="https://tile.openstreetmap.org/${LV.z}/${xx}/${y}.png" style="position:absolute;left:${Math.round(x*256-LV.ox)}px;top:${Math.round(y*256-LV.oy)}px;width:256px;height:256px">`;}return h;}
 const kmJS=(a,b,c,d)=>{const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h));};
-function lvMark(id,ic,lb,pos,col,big){return `<div id="${id}" style="z-index:2;position:absolute;left:${pos[0]}px;top:${pos[1]}px;transform:translate(-50%,-100%);transition:left 1s linear,top 1s linear;text-align:center;pointer-events:none"><div style="width:${big?46:40}px;height:${big?46:40}px;border-radius:50%;background:#fff;border:3px solid ${col};display:flex;align-items:center;justify-content:center;font-size:${big?26:22}px;box-shadow:0 2px 8px #0004;margin:auto">${ic}</div><div style="font-size:11px;font-weight:700;background:#fffd;border-radius:6px;padding:0 4px;margin-top:2px">${lb}</div></div>`;}
+function lvMark(id,ic,lb,pos,col,big){return `<div id="${id}" style="z-index:2;position:absolute;left:${pos[0]}px;top:${pos[1]}px;transform:translate(-50%,-100%);transition:left 1s linear,top 1s linear;text-align:center;pointer-events:none"><div style="width:${big?46:40}px;height:${big?46:40}px;border-radius:50%;background:#fff;border:3px solid ${col};display:flex;align-items:center;justify-content:center;font-size:${big?26:22}px;box-shadow:0 2px 8px #0004;margin:auto">${ic}</div><div style="font-size:11px;font-weight:700;color:#111;background:#fffe;border-radius:6px;padding:0 4px;margin-top:2px">${lb}</div></div>`;}
 function lvStatus(d,m){
   if(!d||!d.ok)return 'مش قادرين نعرض التتبع للأوردر ده.';
   if(!d.hasCourier)return d.status==='delivered'?'تم التسليم للعميل ✓':'لسه مفيش مندوب استلم الأوردر.';
@@ -2006,7 +2006,7 @@ function liveHTML(m){
   ${m.fit?`<div id="lv-map" style="position:relative;width:${LV.W}px;height:${LV.H}px;max-width:100%;margin:auto;overflow:hidden;border-radius:14px;background:#e6e1d4;border:1px solid var(--gold)">${m.tiles}
     ${d.shop?lvMark('lv-s','🏪','المحل',lvPos(d.shop.lat,d.shop.lng),'#2f6f8f'):''}${d.home?lvMark('lv-h','🏠','البيت',lvPos(d.home.lat,d.home.lng),'#2d7a4f'):''}${d.courier?lvMark('lv-c','🛵','المندوب',lvPos(d.courier.lat,d.courier.lng),'#c1121f',true):''}
     <svg id="lv-svg" width="${LV.W}" height="${LV.H}" style="position:absolute;left:0;top:0;pointer-events:none"><polyline id="lv-r" points="${lvLine(m)}" fill="none" stroke="#1a73e8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".85" ${m.rpts?'':'stroke-dasharray="2 9"'}/></svg>
-    <div style="position:absolute;bottom:2px;left:4px;font-size:9px;background:#fffc;padding:0 3px;border-radius:3px">© OpenStreetMap</div></div>
+    <div style="position:absolute;bottom:2px;left:4px;font-size:9px;color:#111;background:#fffc;padding:0 3px;border-radius:3px">© OpenStreetMap</div></div>
   ${d.home?'':'<div class="hint" style="margin-top:6px">العميل ماحددش موقع التوصيل على الخريطة، فالبيت مش ظاهر.</div>'}`:(m.d&&m.d.ok&&m.d.hasCourier?'<div class="hint">لسه مفيش مواقع كفاية للعرض على الخريطة. هنحدّث تلقائي.</div>':'')}
   <div class="hint" style="margin-top:6px">بيتحدّث مباشرة كل ثانية. الخط الأزرق هو أقصر طريق بالعربية للمندوب.</div>
   <div class="row" style="margin-top:10px"><button class="btn alt" data-act="closemodal">إغلاق</button></div></div></div>`;}
@@ -2345,4 +2345,4 @@ apply();
 
 </body>
 </html>
-<!-- v27 -->
+<!-- v28b -->
