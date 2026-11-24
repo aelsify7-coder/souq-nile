@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl" translate="no" class="notranslate">
 <head>
 <meta name="google" content="notranslate">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://lszpjzrqogeyeupizscf.supabase.co https://api.mymemory.translated.net; manifest-src 'self' blob: data:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://lszpjzrqogeyeupizscf.supabase.co https://api.mymemory.translated.net https://router.project-osrm.org; manifest-src 'self' blob: data:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>سوق النيل</title>
@@ -566,7 +566,7 @@ const TABS={
   merchant:[['wallet','محفظتي'],['stats','إحصائياتي'],['prods','منتجاتي'],['orders','طلباتي'],['loc','📍 موقعي']],
   reseller:[['cat','المنتجات'],['stats','لوحتي'],['orders','طلباتي'],['wallet','محفظتي']],
   designer:[['new','تصميم جديد'],['mine','تصاميمي'],['orders','طلباتي'],['myprint','مطبعتي'],['wallet','محفظتي']],
-  press:[['orders','طلبات الطباعة'],['notes','الإشعارات'],['prices','أسعاري'],['wallet','محفظتي']],
+  press:[['orders','طلبات الطباعة'],['notes','الإشعارات'],['prices','أسعاري'],['loc','📍 موقعي'],['wallet','محفظتي']],
   ship:[['notes','الإشعارات'],['pick','للاستلام'],['way','في الطريق'],['price','الأجرة'],['wallet','محفظتي']],
   courier:[['avail','قريب مني'],['mine','أوردراتي'],['wallet','عهدتي وأرباحي']]
 };
@@ -983,6 +983,7 @@ function viewDesigner(){
 function viewPress(){
   const id=ui.pr,owner=pressOwner(id),t=ui.tab.press;
   if(t==='wallet')return `<section>${walletCard(owner)}</section>${withdrawSection(owner)}`;
+  if(t==='loc')return merchLocHTML();
   if(t==='notes')return `<section>${notesList('press:'+id)}</section>`;
   if(t==='prices')return `<section><h2>أسعار القطع والطباعة</h2><div class="card">${S.blanks.map(b=>`<div class="row" style="margin:8px 0;align-items:end"><b style="flex:1;min-width:110px">${esc(b.name)}</b><label class="hint" style="width:100px">التيشيرت<input class="bp" type="number" min="0" step="1" value="${b.tee}" data-b="${b.id}" data-k="tee"></label><label class="hint" style="width:100px">الطباعة<input class="bp" type="number" min="0" step="1" value="${b.print}" data-b="${b.id}" data-k="print"></label></div>`).join('')}<div class="row" style="margin:12px 0 4px;align-items:end"><b style="flex:1;min-width:110px">الطباعة على قطع التجار</b><label class="hint" style="width:100px">سعر الطباعة<input id="pfee" type="number" min="0" step="1" value="${(S.presses.find(x=>x.id===id)||{}).printFee||0}"></label><button class="btn sm" data-act="savepfee">حفظ</button></div><div class="hint">قطع المطبعة: فلوسك = التيشيرت + الطباعة. قطع التجار: فلوسك سعر الطباعة بس، والتاجر ياخد سعر قطعته. التغيير بيسري على الطلبات الجديدة بس.</div></div></section>`;
   return `<section>${grid(rev(S.orders.filter(o=>o.pr===id)),o=>orderCard(o,'press'),'لسه مفيش طلبات طباعة.')}</section>`;
@@ -1119,6 +1120,7 @@ function modalHTML(){
   if(m.mode==='ret')return retHTML(m);
   if(m.mode==='adkit')return adkitHTML(m);
   if(m.mode==='photo')return photoHTML(m);
+  if(m.mode==='live')return liveHTML(m);
   const p=prodById(m.pid),f=floorOf(p);
   const isRes=m.mode==='reseller';
   return `<div class="ov" data-act="closeov"><div class="sheet" role="dialog" aria-label="طلب جديد">
@@ -1415,6 +1417,7 @@ function act(a,d,e){
   else if(a==='akdl'){const m=ui.modal;if(!m||!m.png){toast('الصورة لسه بتتجهّز');return;}const x=document.createElement('a');x.href=m.png;x.download='souq-nile-ad.png';document.body.appendChild(x);x.click();x.remove();return;}
   else if(a==='akshare'){const m=ui.modal;if(!m||!m.png){toast('الصورة لسه بتتجهّز');return;}Promise.resolve().then(()=>{const bin=atob(m.png.split(',')[1]),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);const f=new File([u],'souq-nile-ad.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]}))return navigator.share({files:[f],text:adCaps(prodById(m.ak),m.price,m.link)[0][1]});toast('المشاركة مش مدعومة هنا. حمّل الصورة وابعتها');}).catch(()=>{});return;}
   else if(a==='installapp'){if(V3.inst){V3.inst.prompt();V3.inst=null;}else toast('على آيفون: زر المشاركة ثم "إضافة إلى الشاشة الرئيسية". على أندرويد: قائمة المتصفح ثم "تثبيت التطبيق"');return;}
+  else if(a==='livemap'){const m={mode:'live',id:d.id,d:null,fit:false};ui.modal=m;render();livePoll(m);return;}
   else if(a==='geoset'){geoGet().then(p=>{V3.geo=p;document.querySelectorAll('.geo-st').forEach(e=>{e.textContent='✓ تم تحديد موقع التوصيل';});toast('اتحدد موقعك ✓');}).catch(er=>toast(er.message));return;}
   else if(a==='showph'){signed(d.b||'proofs',d.p).then(u=>{ui.modal={mode:'photo',url:u,t:d.t};render();}).catch(er=>toast(errMsg(er)));return;}
   else if(a==='cogps'){CO.pos=null;coAvail().then(()=>render());return;}
@@ -1885,7 +1888,7 @@ function photoHTML(m){return `<div class="ov" data-act="closeov"><div class="she
 function proofBtns(o,who){
   if(!o.cid&&!o.pickPhoto&&!o.delPhoto)return '';
   const cn=who==='admin'?((S.profiles||[]).find(p=>p.id===o.cid)||{}).name:'';
-  return `<div class="card plain" style="margin:6px 0"><div class="hint">🛵 ${o.cid?'مندوب التوصيل'+(cn?': '+esc(cn):''):''}${o.ckm!==undefined&&o.ckm!==null?' · '+o.ckm+' كم':''}${who==='admin'&&o.cpay?' · أجره '+money(o.cpay):''}${who==='merchant'&&o.cid&&o.status==='preparing'?' · هيستلم الأوردر منك، جهّزه':''}</div><div class="row" style="margin-top:4px">${o.pickPhoto?`<button class="btn alt sm" data-act="showph" data-p="${esc(o.pickPhoto)}" data-t="صورة الاستلام من التاجر">📷 الاستلام من التاجر</button>`:''}${o.delPhoto?`<button class="btn alt sm" data-act="showph" data-p="${esc(o.delPhoto)}" data-t="صورة التسليم للعميل">📷 التسليم للعميل</button>`:''}</div></div>`;}
+  return `<div class="card plain" style="margin:6px 0"><div class="hint">🛵 ${o.cid?'مندوب التوصيل'+(cn?': '+esc(cn):''):''}${o.ckm!==undefined&&o.ckm!==null?' · '+o.ckm+' كم':''}${who==='admin'&&o.cpay?' · أجره '+money(o.cpay):''}${who==='merchant'&&o.cid&&o.status==='preparing'?' · هيستلم الأوردر منك، جهّزه':''}</div><div class="row" style="margin-top:4px">${(o.cid&&who!=='courier'&&(o.status==='preparing'||o.status==='ready'||o.status==='shipped'))?`<button class="btn sm" data-act="livemap" data-id="${esc(o.id)}">🗺️ تابع الأوردر مباشرة</button>`:''}${o.pickPhoto?`<button class="btn alt sm" data-act="showph" data-p="${esc(o.pickPhoto)}" data-t="صورة الاستلام من التاجر">📷 الاستلام من التاجر</button>`:''}${o.delPhoto?`<button class="btn alt sm" data-act="showph" data-p="${esc(o.delPhoto)}" data-t="صورة التسليم للعميل">📷 التسليم للعميل</button>`:''}</div></div>`;}
 
 async function coLoad(){
   if(!CL.profile||CL.profile.role!=='courier')return;
@@ -1894,11 +1897,11 @@ async function coLoad(){
     try{const r=await Promise.all([rpc('courier_mine',{}),rpc('courier_wallet',{})]);CO.mine=r[0]||[];CO.wal=r[1];}catch(e){CO.err=errMsg(e);}
     await coAvail();
   }
-  render();}
+  coWatch();render();}
 async function coAvail(){
   try{if(!CO.pos){try{CO.pos=await geoGet();CO.gerr='';}catch(e){CO.gerr=e.message;}}
     CO.avail=(await rpc('courier_avail',{p_lat:CO.pos?CO.pos.lat:null,p_lng:CO.pos?CO.pos.lng:null}))||[];}catch(e){CO.err=errMsg(e);}}
-setInterval(()=>{if(ui.view==='courier'&&CO.st&&CO.st.approved&&!ui.modal&&!CO.busy&&document.visibilityState==='visible'){coAvail().then(()=>rpc('courier_mine',{})).then(m=>{CO.mine=m||[];render();}).catch(()=>{});}},30000);
+setInterval(()=>{if(ui.view==='courier'&&CO.st&&CO.st.approved&&!ui.modal&&!CO.busy&&document.visibilityState==='visible'){coAvail().then(()=>rpc('courier_mine',{})).then(m=>{CO.mine=m||[];coWatch();render();}).catch(()=>{});}},30000);
 
 function coApplyHTML(){
   const p=CL.profile||{},f=CO.f;
@@ -1918,7 +1921,7 @@ function coCard(x){
   <div class="hint">${esc(x.gov||'')}${x.mAddr?' · التاجر: '+esc(x.mAddr):''}</div>
   <div class="tiles" style="margin:8px 0"><div class="tile"><b>${kmT(x.kmTo)}</b><span>تبعد عنك</span></div><div class="tile"><b>${kmT(x.kmTrip)}</b><span>من التاجر للعميل</span></div><div class="tile"><b>${money(x.pay)}</b><span>أجرتك${trip?'':' (أساسية)'}</span></div><div class="tile"><b>${money(x.cod)}</b><span>تحصّله كاش</span></div></div>
   <div class="row"><button class="btn" data-act="coclaim" data-id="${esc(x.id)}">استلم الأوردر ده</button></div></div>`;}
-const coSt={preparing:['🏪 روح استلمه من التاجر','#8a6d1a'],shipped:['🚚 في الطريق للعميل','#2f6f8f'],delivered:['✓ اتسلّم','#2d7a4f']};
+const coSt={preparing:['🏪 روح استلمه من التاجر','#8a6d1a'],ready:['🏭 روح استلمه من المطبعة','#8a6d1a'],shipped:['🚚 في الطريق للعميل','#2f6f8f'],delivered:['✓ اتسلّم','#2d7a4f']};
 function coMine(x){
   const c=x.cust||{},st=coSt[x.status]||['',''];
   const tel=p=>p?`<a href="tel:${esc(p)}" class="btn alt sm" style="text-decoration:none">📞 ${esc(p)}</a>`:'';
@@ -1928,7 +1931,7 @@ function coMine(x){
   <div class="hint">أجرتك ${money(x.cpay||0)} · تحصّل كاش ${money(x.cod)}</div>
   ${x.status==='delivered'?'':`<dl class="kv"><dt>التاجر</dt><dd>${esc(x.mName||'—')} ${tel(x.mPhone)}</dd><dt>عنوانه</dt><dd>${esc(x.mAddr||'—')} <a class="btn alt sm" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(mapLink(x.mLat,x.mLng,x.mAddr))}">🗺️ الخريطة</a></dd>
   <dt>العميل</dt><dd>${esc(c.name||'')} ${tel(c.phone)}</dd><dt>العنوان</dt><dd>${esc(c.gov||'')} · ${esc(c.addr||'')} <a class="btn alt sm" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(mapLink(c.lat,c.lng,(c.gov||'')+' '+(c.addr||'')))}">🗺️ الخريطة</a></dd><dt>الوقت المتاح</dt><dd>${esc(c.time||'')}</dd></dl>`}
-  <div class="row" style="margin-top:8px">${x.status==='preparing'?`<button class="btn" data-act="copick" data-id="${esc(x.id)}">📸 استلمت من التاجر</button><button class="btn alt sm" data-act="counclaim" data-id="${esc(x.id)}">إلغاء</button>`:''}${x.status==='shipped'?`<button class="btn good" data-act="codeliver" data-id="${esc(x.id)}">📸 سلّمت للعميل</button>`:''}${ph(x.pickPhoto,'صورة الاستلام')}${ph(x.delPhoto,'صورة التسليم')}</div></div>`;}
+  <div class="row" style="margin-top:8px">${(x.status==='preparing'||x.status==='ready')?`<button class="btn" data-act="copick" data-id="${esc(x.id)}">📸 استلمت من التاجر</button><button class="btn alt sm" data-act="counclaim" data-id="${esc(x.id)}">إلغاء</button>`:''}${x.status==='shipped'?`<button class="btn good" data-act="codeliver" data-id="${esc(x.id)}">📸 سلّمت للعميل</button>`:''}${x.status!=='delivered'?`<button class="btn alt sm" data-act="livemap" data-id="${esc(x.id)}">🧭 خريطة الطريق</button>`:''}${ph(x.pickPhoto,'صورة الاستلام')}${ph(x.delPhoto,'صورة التسليم')}</div></div>`;}
 
 function viewCourier(){
   if(!CL.profile||CL.profile.role!=='courier')return '<div class="empty">الصفحة دي للمناديب بس.</div>';
@@ -1968,6 +1971,85 @@ function adminCourierHTML(){
     <dl class="kv"><dt>الموبايل</dt><dd class="num">${esc(x.phone||'')}</dd><dt>الإيميل</dt><dd dir="ltr">${esc(x.email||'')}</dd><dt>الرقم القومي</dt><dd class="num" dir="ltr">${esc(x.nid||'')}</dd><dt>توصيلات</dt><dd>${x.delivered}</dd><dt>عهدة كاش عليه</dt><dd><b>${money(x.owed)}</b></dd></dl>
     <div class="row" style="margin-top:6px"><button class="btn alt sm" data-act="showph" data-b="ids" data-p="${esc(x.id_path)}" data-t="بطاقة ${esc(x.name||'')}">🪪 صورة البطاقة</button>${x.approved?`<button class="btn bad sm" data-act="cosus" data-id="${x.uid}" data-on="0">إيقاف</button>`:`<button class="btn good sm" data-act="cosus" data-id="${x.uid}" data-on="1">موافقة وتفعيل</button>`}</div>
     ${x.approved?`<div class="row" style="margin-top:6px"><input id="cs-${x.uid}" type="number" placeholder="مبلغ ورّده (ج)" style="width:140px"><button class="btn sm" data-act="cosettle" data-id="${x.uid}">سجّل توريد</button></div>`:''}</div>`).join(''):'<div class="empty">لسه مفيش مناديب سجّلوا.</div>')}</section>`;}
+
+/* ===== LIVE TRACKING MAP ===== */
+const LV={z:0,ox:0,oy:0,W:0,H:0};
+function mpx(lat,lng,z){const s=256*Math.pow(2,z),r=lat*Math.PI/180;return [(lng+180)/360*s,(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*s];}
+function liveFit(pts){const W=Math.min(360,(window.innerWidth||360)-56),H=300;let z=17;
+  for(;z>8;z--){const q=pts.map(p=>mpx(p[0],p[1],z)),xs=q.map(a=>a[0]),ys=q.map(a=>a[1]);if(Math.max(...xs)-Math.min(...xs)<=W-100&&Math.max(...ys)-Math.min(...ys)<=H-100)break;}
+  const q=pts.map(p=>mpx(p[0],p[1],z)),xs=q.map(a=>a[0]),ys=q.map(a=>a[1]);
+  LV.z=z;LV.W=W;LV.H=H;LV.ox=(Math.max(...xs)+Math.min(...xs))/2-W/2;LV.oy=(Math.max(...ys)+Math.min(...ys))/2-H/2;}
+const lvPos=(lat,lng)=>{const p=mpx(lat,lng,LV.z);return [Math.max(18,Math.min(LV.W-18,p[0]-LV.ox)),Math.max(18,Math.min(LV.H-18,p[1]-LV.oy))];};
+function liveTiles(){const n=Math.pow(2,LV.z),x0=Math.floor(LV.ox/256),x1=Math.floor((LV.ox+LV.W)/256),y0=Math.floor(LV.oy/256),y1=Math.floor((LV.oy+LV.H)/256);let h='';
+  for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){if(y<0||y>=n)continue;const xx=((x%n)+n)%n;h+=`<img alt="" referrerpolicy="no-referrer" src="https://tile.openstreetmap.org/${LV.z}/${xx}/${y}.png" style="position:absolute;left:${Math.round(x*256-LV.ox)}px;top:${Math.round(y*256-LV.oy)}px;width:256px;height:256px">`;}return h;}
+const kmJS=(a,b,c,d)=>{const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h));};
+function lvMark(id,ic,lb,pos,col,big){return `<div id="${id}" style="z-index:2;position:absolute;left:${pos[0]}px;top:${pos[1]}px;transform:translate(-50%,-100%);transition:left 1s linear,top 1s linear;text-align:center;pointer-events:none"><div style="width:${big?46:40}px;height:${big?46:40}px;border-radius:50%;background:#fff;border:3px solid ${col};display:flex;align-items:center;justify-content:center;font-size:${big?26:22}px;box-shadow:0 2px 8px #0004;margin:auto">${ic}</div><div style="font-size:11px;font-weight:700;background:#fffd;border-radius:6px;padding:0 4px;margin-top:2px">${lb}</div></div>`;}
+function lvStatus(d,m){
+  if(!d||!d.ok)return 'مش قادرين نعرض التتبع للأوردر ده.';
+  if(!d.hasCourier)return d.status==='delivered'?'تم التسليم للعميل ✓':'لسه مفيش مندوب استلم الأوردر.';
+  const toShop=d.status==='preparing'||d.status==='ready';
+  const tgt=toShop?d.shop:d.home;
+  let s=toShop?(d.pod?'🛵 المندوب في الطريق للمطبعة يستلم الأوردر':'🛵 المندوب في الطريق للمحل يستلم الأوردر'):'📦 المندوب استلم الأوردر وماشي للعميل';
+  if(d.courier&&tgt){
+    const km=(m&&m.rkm!=null)?m.rkm:kmJS(d.courier.lat,d.courier.lng,tgt.lat,tgt.lng);
+    const mn=(m&&m.rmin!=null)?m.rmin:Math.max(1,Math.round(km*3));
+    if(kmJS(d.courier.lat,d.courier.lng,tgt.lat,tgt.lng)<0.06)s=toShop?'🏪 المندوب وصل عند '+(d.pod?'المطبعة':'المحل'):'📍 المندوب وصل عند العميل';
+    else s+=` · فاضل ${km<1?Math.round(km*1000)+' م':km.toFixed(1)+' كم'} (حوالي ${Math.max(1,Math.round(mn))} دقيقة)`;
+    if(d.courier.age>20)s+=' · ⚠️ آخر إشارة من '+d.courier.age+' ثانية';
+  }
+  else if(!d.courier)s+=' · بنستنى إشارة المندوب...';
+  return s;}
+function liveHTML(m){
+  const d=m.d;
+  return `<div class="ov" data-act="closeov"><div class="sheet" role="dialog" aria-label="تتبع مباشر"><h2 style="margin-top:0">🗺️ تتبع الأوردر ${esc(m.id)}</h2>
+  <div id="lv-t" style="font-weight:700;margin-bottom:8px">${m.d?esc(lvStatus(d,m)):'⏳ بنحمّل...'}</div>
+  ${m.fit?`<div id="lv-map" style="position:relative;width:${LV.W}px;height:${LV.H}px;max-width:100%;margin:auto;overflow:hidden;border-radius:14px;background:#e6e1d4;border:1px solid var(--gold)">${m.tiles}
+    ${d.shop?lvMark('lv-s','🏪','المحل',lvPos(d.shop.lat,d.shop.lng),'#2f6f8f'):''}${d.home?lvMark('lv-h','🏠','البيت',lvPos(d.home.lat,d.home.lng),'#2d7a4f'):''}${d.courier?lvMark('lv-c','🛵','المندوب',lvPos(d.courier.lat,d.courier.lng),'#c1121f',true):''}
+    <svg id="lv-svg" width="${LV.W}" height="${LV.H}" style="position:absolute;left:0;top:0;pointer-events:none"><polyline id="lv-r" points="${lvLine(m)}" fill="none" stroke="#1a73e8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".85" ${m.rpts?'':'stroke-dasharray="2 9"'}/></svg>
+    <div style="position:absolute;bottom:2px;left:4px;font-size:9px;background:#fffc;padding:0 3px;border-radius:3px">© OpenStreetMap</div></div>
+  ${d.home?'':'<div class="hint" style="margin-top:6px">العميل ماحددش موقع التوصيل على الخريطة، فالبيت مش ظاهر.</div>'}`:(m.d&&m.d.ok&&m.d.hasCourier?'<div class="hint">لسه مفيش مواقع كفاية للعرض على الخريطة. هنحدّث تلقائي.</div>':'')}
+  <div class="hint" style="margin-top:6px">بيتحدّث مباشرة كل ثانية. الخط الأزرق هو أقصر طريق بالعربية للمندوب.</div>
+  <div class="row" style="margin-top:10px"><button class="btn alt" data-act="closemodal">إغلاق</button></div></div></div>`;}
+function lvLine(m){
+  const d=m.d||{};
+  if(m.rpts)return m.rpts.map(q=>{const p=lvPos(q[0],q[1]);return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ');
+  const t=lvTarget(d);if(d.courier&&t){const a=lvPos(d.courier.lat,d.courier.lng),b=lvPos(t.lat,t.lng);return a[0]+','+a[1]+' '+b[0]+','+b[1];}
+  return '';}
+const lvTarget=d=>(d.status==='preparing'||d.status==='ready')?d.shop:d.home;
+function lvRoute(m,d){
+  const t=lvTarget(d);if(!d.courier||!t||m.rbusy)return;
+  const now=Date.now();if(now-(m.rat||0)<10000)return;m.rat=now;m.rbusy=true;
+  const u='https://router.project-osrm.org/route/v1/driving/'+d.courier.lng+','+d.courier.lat+';'+t.lng+','+t.lat+'?overview=full&geometries=geojson';
+  fetch(u).then(r=>r.json()).then(j=>{m.rbusy=false;if(ui.modal!==m)return;const r=j&&j.routes&&j.routes[0];if(!r)return;
+    m.rpts=r.geometry.coordinates.map(c=>[c[1],c[0]]);m.rkm=r.distance/1000;m.rmin=r.duration/60;lvDraw(m);}).catch(()=>{m.rbusy=false;});}
+function lvDraw(m){const r=document.getElementById('lv-r');if(r){r.setAttribute('points',lvLine(m));if(m.rpts)r.removeAttribute('stroke-dasharray');}
+  const t=document.getElementById('lv-t');if(t&&m.d)t.textContent=lvStatus(m.d,m);}
+function liveApply(m,d){
+  const pts=[];['shop','home','courier'].forEach(k=>{if(d[k])pts.push([d[k].lat,d[k].lng]);});
+  const first=!m.fit&&pts.length>=1&&d.ok&&d.hasCourier;
+  if(m.d&&m.d.status!==d.status){m.rpts=null;m.rkm=null;m.rmin=null;m.rat=0;}
+  m.d=d;
+  if(first){liveFit(pts.length>1?pts:[pts[0],[pts[0][0]+0.004,pts[0][1]+0.004]]);m.tiles=liveTiles();m.fit=true;render();lvRoute(m,d);return;}
+  const c=document.getElementById('lv-c');
+  if(c&&d.courier){const p=lvPos(d.courier.lat,d.courier.lng);c.style.left=p[0]+'px';c.style.top=p[1]+'px';}
+  else if(!c&&m.fit&&d.courier){render();}
+  else if(!m.fit){render();return;}
+  lvRoute(m,d);lvDraw(m);}
+function livePoll(m){
+  let busy=false;
+  const go=()=>{if(ui.modal!==m||busy)return;busy=true;rpc('order_live',{p_id:m.id}).then(d=>{busy=false;if(ui.modal!==m)return;liveApply(m,d||{ok:false});}).catch(()=>{busy=false;});};
+  go();const iv=setInterval(()=>{if(ui.modal!==m){clearInterval(iv);return;}go();},1000);}
+const coAct=x=>x.status==='preparing'||x.status==='ready'||x.status==='shipped';
+function coWatch(){
+  const isC=CL.profile&&CL.profile.role==='courier';
+  const act=(CO.mine||[]).filter(coAct);
+  if(!isC||!act.length||!navigator.geolocation){if(CO.wid!=null){try{navigator.geolocation.clearWatch(CO.wid);}catch(e){}CO.wid=null;}return;}
+  if(CO.wid!=null)return;
+  try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(()=>{});}catch(e){}
+  CO.wid=navigator.geolocation.watchPosition(p=>{const n=Date.now();if(n-(CO.lp||0)<900)return;CO.lp=n;CO.pos={lat:p.coords.latitude,lng:p.coords.longitude};
+    (CO.mine||[]).filter(coAct).forEach(x=>rpc('courier_ping',{p_id:x.id,p_lat:CO.pos.lat,p_lng:CO.pos.lng}).catch(()=>{}));},()=>{},{enableHighAccuracy:true,maximumAge:0,timeout:15000});}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&CO.wid!=null){try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(()=>{});}catch(e){}}});
+setInterval(coWatch,10000);
 
 /* PWA install + SEO */
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();V3.inst=e;});
@@ -2263,3 +2345,4 @@ apply();
 
 </body>
 </html>
+<!-- v27 -->
