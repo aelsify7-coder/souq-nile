@@ -391,7 +391,7 @@ function load(){try{const r=localStorage.getItem(KEY);if(r)return repairRaw(r);}
 let S={settings:{type:'fixed',value:10,ship:50},merchants:[],resellers:[],designers:[],ships:[],presses:[],products:[],listings:[],blanks:[],orders:[],withdrawals:[],notes:[],n:1,profiles:[]};
 const ui={ddMode:'design',pf:'designer',view:'admin',m:'m1',r:'r1',d:'d1',pr:'pr1',s:'s1',dd:newDD(),modal:null,tab:{admin:'over',merchant:'wallet',reseller:'cat',designer:'new',press:'orders',ship:'notes',courier:'avail'},filter:'all',cat:'all',draft:newDraft(),editId:null,confirmDel:null,scrollTo:null};
 
-const shares=o=>({t:r2((o.tU||0)*o.qty),m:r2(o.mU*o.qty),a:r2(o.fU*o.qty-(o.disc||0)-(o.cpay||0)+(o.dlv||0)),d:r2((o.dU||0)*o.qty),s:r2((o.sU||0)*o.qty),r:r2((o.unit-o.mU-(o.tU||0)-o.fU-(o.dU||0)-(o.sU||0))*o.qty)});
+const shares=o=>({t:r2((o.tU||0)*o.qty),m:r2(o.mU*o.qty-(o.mdisc||0)),a:r2(o.fU*o.qty-((o.disc||0)-(o.mdisc||0))-(o.cpay||0)+(o.dlv||0)),d:r2((o.dU||0)*o.qty),s:r2((o.sU||0)*o.qty),r:r2((o.unit-o.mU-(o.tU||0)-o.fU-(o.dU||0)-(o.sU||0))*o.qty)});
 const pressOwner=id=>{const p=S.presses.find(x=>x.id===id);return p&&p.designer?'d:'+p.designer:'p:'+id;};
 function ownerOf(o,owner){
   const s=shares(o);let v=0;
@@ -563,7 +563,7 @@ function withdrawSection(owner){
 
 const TABS={
   admin:[['over','نظرة عامة'],['orders','الطلبات'],['people','الناس'],['ppl','الأطراف'],['rep','تقارير'],['cour','المناديب'],['wd','السحب'],['prods','المنتجات'],['set','العمولة']],
-  merchant:[['wallet','محفظتي'],['stats','إحصائياتي'],['prods','منتجاتي'],['orders','طلباتي'],['loc','📍 موقعي']],
+  merchant:[['wallet','محفظتي'],['stats','إحصائياتي'],['prods','منتجاتي'],['promo','🏷️ كوبوناتي'],['orders','طلباتي'],['loc','📍 موقعي']],
   reseller:[['cat','المنتجات'],['stats','لوحتي'],['orders','طلباتي'],['wallet','محفظتي']],
   designer:[['new','تصميم جديد'],['mine','تصاميمي'],['orders','طلباتي'],['myprint','مطبعتي'],['wallet','محفظتي']],
   press:[['orders','طلبات الطباعة'],['notes','الإشعارات'],['prices','أسعاري'],['loc','📍 موقعي'],['wallet','محفظتي']],
@@ -858,11 +858,22 @@ function draftForm(){
 function lowStockHTML(mine){const out=[],low=[];mine.forEach(p=>{(p.variants||[]).forEach(v=>{const n=+v.stock||0,t=esc(p.name)+' ('+esc(cname(v.color))+(v.size?' · '+esc(v.size):'')+')';if(n<=0)out.push(t);else if(n<=2)low.push(t+' — باقي '+n);});});
  if(!out.length&&!low.length)return '';
  return `<section><div class="card" style="border:2px solid #b3261e;background:#fff4f2"><b>⚠️ تنبيه المخزون</b>${out.length?`<div style="margin-top:6px">🔴 خلصت (${out.length}): ${out.slice(0,6).join('، ')}${out.length>6?' ...':''}</div>`:''}${low.length?`<div style="margin-top:6px">🟠 على وشك الخلاص (${low.length}): ${low.slice(0,6).join('، ')}${low.length>6?' ...':''}</div>`:''}<div class="hint">حدّث الكميات من تعديل المنتج عشان ماتخسرش مبيعات.</div></div></section>`;}
+function promoHTML(){const L=V3.mcps||[];
+ return `<section><h2>🏷️ كوبونات الخصم بتاعتي</h2><div class="card"><div class="form">
+ <label>الكود (إنجليزي/أرقام)<input id="mc-code" dir="ltr" placeholder="SALE10"></label>
+ <label>النوع<select id="mc-kind"><option value="pct">نسبة %</option><option value="fixed">مبلغ ثابت</option></select></label>
+ <label>القيمة (النسبة لحد 50%)<input id="mc-val" type="number" min="1" value="10"></label>
+ <label>أقل قيمة للطلب<input id="mc-min" type="number" min="0" value="0"></label>
+ <label>أقصى عدد استخدامات (اختياري)<input id="mc-max" type="number" min="1"></label>
+ <label>صلاحية بالأيام (اختياري)<input id="mc-days" type="number" min="1"></label></div>
+ <div class="row sp" style="margin-top:10px"><span class="hint">الخصم بيتخصم من نصيبك إنت بس (سعرك للقطعة)، وأرباح المسوّق والمنصة والباقيين ما بتتأثرش. بيشتغل على منتجاتك العادية بس (مش منتجات الطباعة)، وكل عميل يستخدمه مرة.</span><button class="btn" data-act="mcsave">إضافة / تحديث</button></div></div>
+ ${L.length?L.map(c=>`<div class="card plain" style="margin:6px 0"><div class="row sp"><b dir="ltr">${esc(c.code)}</b><span>${c.kind==='pct'?c.value+'%':money(c.value)}${c.min_order>0?' · من '+money(c.min_order):''}</span></div><div class="hint">استُخدم ${c.used}${c.max_uses?' / '+c.max_uses:''} مرة${c.expires_at?' · ينتهي '+new Date(c.expires_at).toLocaleDateString('ar-EG'):''} · ${c.active?'شغال':'موقوف'}</div><div class="row" style="margin-top:6px"><button class="btn alt sm" data-act="mctog" data-c="${esc(c.code)}">${c.active?'إيقاف':'تشغيل'}</button><button class="btn bad sm" data-act="mcdel" data-c="${esc(c.code)}">حذف</button></div></div>`).join(''):'<div class="empty">لسه مفيش كوبونات. اعمل أول كوبون وابعته لعملائك.</div>'}</section>`;}
 function viewMerchant(){
   const id=ui.m,owner='m:'+id,t=ui.tab.merchant;
   if(t==='wallet')return `<section>${walletCard(owner)}</section>${withdrawSection(owner)}`;
   if(t==='stats')return statsHTML(owner,'merchant',id);
   if(t==='loc')return merchLocHTML();
+  if(t==='promo')return promoHTML();
   if(t==='prods'){
     const mine=S.products.filter(p=>p.m===id);
     return lowStockHTML(mine)+`<section id="formtop"><h2>${ui.editId?'تعديل المنتج':'أضف منتج'}</h2>${draftForm()}</section>
@@ -1386,7 +1397,7 @@ function act(a,d,e){
   else if(a==='buy'){
     const p=prodById(d.id);
     if(!p||totalStock(p)<=0){toast('المنتج ده نفد من المخزون');return;}
-    const rr=d.r||'';ui.modal={mode:'customer',pid:d.id,rid:rr||null,price:rr?lineUnit({pid:d.id,rid:rr}):floorOf(p)};if(rr)trackClick(rr,d.id);seoProduct(p,ui.modal.price);
+    const rr=d.r||'';ui.modal={mode:'customer',pid:d.id,rid:rr||null,price:rr?lineUnit({pid:d.id,rid:rr}):floorOf(p)};if(rr)trackClick(rr,d.id);trackView(d.id);seoProduct(p,ui.modal.price);
   }
   else if(a==='delimgx'){ui.draft.imgs.splice(+d.i,1);}
   else if(a==='page'){ui.modal={mode:'page',k:d.k};}
@@ -1406,6 +1417,11 @@ function act(a,d,e){
     rpc('request_return',{p_id:d.id,p_reason:r}).then(()=>{ui.modal=null;toast('اتبعت طلب الاسترجاع ✓');render();refreshNow();}).catch(er=>toast(errMsg(er)));return;}
   else if(a==='retok'||a==='retno'){rpc('resolve_return',{p_id:d.id,p_ok:a==='retok'}).then(()=>{toast(a==='retok'?'اتقبل الاسترجاع':'اترفض الطلب');refreshNow();}).catch(er=>toast(errMsg(er)));return;}
   else if(a==='cpapply'){const v=(document.getElementById('c-coupon')||{value:''}).value.trim();ui.cf=ui.cf||{};ui.cf.coupon=v;quoteCart().then(()=>{if(V3.cq&&!V3.cq.ok)toast(V3.cq.msg||'الكود مش صحيح');else if(V3.cq&&V3.cq.code)toast('اتطبّق الكود ✓');});return;}
+  else if(a==='mcsave'){const g=i=>(document.getElementById(i)||{value:''}).value;
+    rpc('merchant_coupon_save',{p_code:g('mc-code'),p_kind:g('mc-kind'),p_value:parseFloat(g('mc-val'))||0,p_min:parseFloat(g('mc-min'))||0,p_max:parseInt(g('mc-max'))||null,p_days:parseInt(g('mc-days'))||0,p_active:true}).then(()=>{toast('اتحفظ الكوبون ✓');return loadV3();}).then(render).catch(er=>toast(errMsg(er)));return;}
+  else if(a==='mctog'){const c=(V3.mcps||[]).find(x=>x.code===d.c);if(!c)return;
+    rpc('merchant_coupon_save',{p_code:c.code,p_kind:c.kind,p_value:c.value,p_min:c.min_order,p_max:c.max_uses,p_days:0,p_active:!c.active}).then(()=>loadV3()).then(render).catch(er=>toast(errMsg(er)));return;}
+  else if(a==='mcdel'){rpc('merchant_coupon_delete',{p_code:d.c}).then(()=>{toast('اتحذف');return loadV3();}).then(render).catch(er=>toast(errMsg(er)));return;}
   else if(a==='cpsave'){const g=i=>(document.getElementById(i)||{value:''}).value;
     rpc('admin_coupon_save',{p_code:g('cp-code'),p_kind:g('cp-kind'),p_value:parseFloat(g('cp-val'))||0,p_min:parseFloat(g('cp-min'))||0,p_max:parseInt(g('cp-max'))||null,p_days:parseInt(g('cp-days'))||0,p_first:!!(document.getElementById('cp-first')||{}).checked,p_active:true}).then(()=>{toast('اتحفظ الكوبون ✓');loadV3();}).catch(er=>toast(errMsg(er)));return;}
   else if(a==='cptog'){const c=V3.cps.find(x=>x.code===d.c);if(!c)return;rpc('admin_coupon_save',{p_code:c.code,p_kind:c.kind,p_value:c.value,p_min:c.min_order,p_max:c.max_uses,p_days:c.expires_at?Math.max(1,Math.ceil((new Date(c.expires_at)-Date.now())/86400000)):0,p_first:c.first_only,p_active:d.on==='1'}).then(()=>loadV3()).catch(er=>toast(errMsg(er)));return;}
@@ -1792,7 +1808,8 @@ async function pull(){
   return changed;
 }
 /* ===== V3: coupons, deals, wishlist, returns, search, dashboards, store pages, ad kit ===== */
-const V3={wish:[],cps:[],cq:null,store:null,clicks:[],slug:'',seen:{},f:{sort:'',min:'',max:'',color:'',size:''},inst:null,geo:null};
+const _tv={};function trackView(pid){if(_tv[pid])return;_tv[pid]=1;try{rpc('track_view',{p_pid:pid}).catch(()=>{});}catch(e){}}
+const V3={mcps:[],views:{},wish:[],cps:[],cq:null,store:null,clicks:[],slug:'',seen:{},f:{sort:'',min:'',max:'',color:'',size:''},inst:null,geo:null};
 const norm=s=>String(s||'').toLowerCase().replace(/[ً-ْـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/ؤ/g,'و').replace(/ئ/g,'ي');
 function lev1(a,b){if(a===b)return true;const la=a.length,lb=b.length;if(Math.abs(la-lb)>1)return false;let i=0;while(i<la&&i<lb&&a[i]===b[i])i++;
  if(la===lb)return a.slice(i+1)===b.slice(i+1)||(a[i]===b[i+1]&&a[i+1]===b[i]&&a.slice(i+2)===b.slice(i+2));
@@ -1836,6 +1853,7 @@ function custNotes(){return rev(S.notes.filter(n=>n.to==='cust')).slice(0,5);}
 function notesHTML(){const l=custNotes();return l.length?`<section><h2>🔔 إشعاراتي</h2>${l.map(n=>`<div class="card plain" style="margin:6px 0">${esc(n.text)} <span class="hint num">${fmtDate(n.at)}</span></div>`).join('')}</section>`:'';}
 async function loadV3(){
  if(!CL.profile)return;
+ if(CL.profile.role==='merchant'){try{V3.mcps=(await rpc('merchant_coupon_list',{}))||[];}catch(e){}try{V3.views=(await rpc('my_views',{}))||{};}catch(e){}}
  try{V3.wish=(await rpc('wish_list',{}))||[];}catch(e){}
  if(CL.profile.role==='reseller'){try{V3.clicks=(await rpc('my_clicks',{}))||[];}catch(e){}try{V3.slug=(await rpc('my_slug',{}))||'';}catch(e){}}
  if(isAdmin()){try{V3.cps=(await rpc('admin_coupon_list',{}))||[];}catch(e){}}
@@ -1870,7 +1888,7 @@ function statsHTML(owner,kind,id){
  const dn=S.orders.filter(o=>o.status==='delivered'&&ownerOf(o,owner)>0).length;
  let h=`<section><div class="tiles"><div class="tile"><span>إجمالي الأرباح المؤكدة</span><b class="num">${money(r2(total))}</b></div><div class="tile"><span>طلبات اتسلّمت</span><b class="num">${dn}</b></div><div class="tile"><span>طلبات جارية</span><b class="num">${valid.filter(o=>o.status!=='delivered').length}</b></div>${kind==='reseller'?`<div class="tile"><span>نقرات على لينكاتك (30 يوم)</span><b class="num">${clkTot}</b></div>`:''}</div></section>`;
  h+=`<section><h2>أرباحك آخر 14 يوم</h2><div class="card plain"><div style="display:flex;align-items:flex-end;gap:4px;height:120px;direction:ltr">${earn.map((v,i)=>`<div title="${new Date(days[i]).toLocaleDateString('ar-EG')}: ${money(r2(v))}" style="flex:1;background:${v?'#2d7a4f':'#ddd'};height:${Math.max(3,Math.round(v/mx*110))}px;border-radius:3px 3px 0 0"></div>`).join('')}</div><div class="hint" style="display:flex;justify-content:space-between;direction:ltr"><span>${new Date(days[0]).getDate()}/${new Date(days[0]).getMonth()+1}</span><span>النهارده</span></div></div></section>`;
- h+=`<section><h2>أكتر منتجات بتبيع</h2>${top.length?top.map(([pid,x])=>{const p=prodById(pid);return `<div class="card plain" style="margin:6px 0"><div class="row sp"><b>${esc(p?p.name:'منتج')}</b><span class="num">${x.q} قطعة · ${money(r2(x.e))}</span></div>${kind==='reseller'&&clk[pid]?`<div class="hint">${clk[pid]} نقرة · تحويل ${Math.round(x.q/clk[pid]*100)}%</div>`:''}</div>`;}).join(''):'<div class="empty">لسه مفيش مبيعات. شارك لينكاتك وهتظهر هنا.</div>'}</section>`;
+ h+=`<section><h2>أكتر منتجات بتبيع</h2>${top.length?top.map(([pid,x])=>{const p=prodById(pid);return `<div class="card plain" style="margin:6px 0"><div class="row sp"><b>${esc(p?p.name:'منتج')}</b><span class="num">${x.q} قطعة · ${money(r2(x.e))}</span></div>${kind==='merchant'&&V3.views&&V3.views[pid]?`<div class="hint">👁️ ${V3.views[pid]} مشاهدة (30 يوم) · تحويل ${Math.round(x.q/V3.views[pid]*100)}%</div>`:''}${kind==='reseller'&&clk[pid]?`<div class="hint">${clk[pid]} نقرة · تحويل ${Math.round(x.q/clk[pid]*100)}%</div>`:''}</div>`;}).join(''):'<div class="empty">لسه مفيش مبيعات. شارك لينكاتك وهتظهر هنا.</div>'}</section>`;
  return h;}
 function resExtra(id){
  const n=S.orders.filter(o=>o.rid===id&&o.status==='delivered').length,t=tierInfo(n),link=V3.slug?location.origin+location.pathname+'?s='+V3.slug:'';
