@@ -839,9 +839,9 @@ function draftForm(){
     <div class="hint" id="np-hint" style="margin-top:8px">هتستلم سعرك كامل. العمولة بتتضاف فوقه تلقائي.</div>
     <div style="margin-top:14px"><div style="font-weight:600;font-size:14px;margin-bottom:6px">صورة المنتج</div>
       <div class="row">${d.img?`<img class="pv" src="${d.img}" alt="صورة المنتج">`:''}
-      <div><input id="np-img" type="file" accept="image/*" aria-label="اختار صورة المنتج">
-      ${d.img?`<div class="row" style="margin-top:6px"><button class="btn good sm" data-act="enhmain">${d.imgOrig?'حسّنها تاني':'✨ حسّن الصورة'}</button>${d.imgOrig?'<button class="btn alt sm" data-act="origmain">الأصلية</button>':''}<button class="btn bad sm" data-act="delimg">حذف الصورة</button></div>${d.imgOrig?`<div class="row" style="margin-top:6px"><div class="hint">قبل<br><img class="pv" style="width:84px;height:84px" src="${d.imgOrig}" alt="قبل"></div><div class="hint">بعد<br><img class="pv" style="width:84px;height:84px" src="${d.img}" alt="بعد"></div></div>`:''}`:''}
-      <div class="hint" style="margin-top:4px">صوّر المنتج بالموبايل أو اختار صورة من الجهاز.</div></div></div></div>
+      <div><input id="np-img" type="file" accept="image/*" aria-label="اختار صورة المنتج"><div class="row" style="margin-top:6px"><button class="btn sm" type="button" data-act="camopen" data-t="main">📷 كاميرا المرشد</button></div>
+      ${d.img?`<div class="row" style="margin-top:6px"><button class="btn good sm" data-act="enhmain">${d.imgOrig?'حسّنها تاني':'✨ حسّن الصورة'}</button><button class="btn alt sm" type="button" data-act="cutopen" data-t="main">✂️ عزل المنتج</button>${d.imgOrig?'<button class="btn alt sm" data-act="origmain">الأصلية</button>':''}<button class="btn bad sm" data-act="delimg">حذف الصورة</button></div>${d.imgOrig?`<div class="row" style="margin-top:6px"><div class="hint">قبل<br><img class="pv" style="width:84px;height:84px" src="${d.imgOrig}" alt="قبل"></div><div class="hint">بعد<br><img class="pv" style="width:84px;height:84px" src="${d.img}" alt="بعد"></div></div>`:''}`:''}
+      ${d.imgNote?`<div class="hint" style="margin-top:6px;font-weight:700;color:${d.imgNote[0]==='✓'?'#2d7a4f':d.imgNote[0]==='⚠'?'#b36a00':'inherit'}">${esc(d.imgNote)}</div>`:''}${d.printable?'<div class="hint" style="margin-top:4px">المنتج مناسب للطباعة: التحسين بيحافظ على الإطار زي ما هو عشان تصميم المصمم يفضل في مكانه.</div>':''}<div class="hint" style="margin-top:4px">صوّر المنتج بالموبايل أو اختار صورة من الجهاز.</div></div></div></div>
     <div style="margin-top:12px"><div style="font-weight:600;font-size:14px;margin-bottom:6px">صور إضافية (لحد 3)</div>
       <div class="thumbs">${(d.imgs||[]).map((u,i)=>`<span style="position:relative"><img src="${u}" alt="صورة إضافية ${i+1}"><button class="btn bad sm" data-act="delimgx" data-i="${i}" style="position:absolute;top:-6px;left:-6px;padding:0 6px" aria-label="حذف">✕</button></span>`).join('')}</div>
       ${(d.imgs||[]).length<3?'<input id="np-imgs" type="file" accept="image/*" multiple aria-label="صور إضافية">':''}</div>
@@ -849,7 +849,7 @@ function draftForm(){
     <div class="hint" style="margin-bottom:8px">اضغط على مربع اللون واختار لونه من اللوحة أو بالقطّارة، وبعدين اختار كل مقاس واكتب عدد قطعه.</div>
     <div class="grid">${d.colors.map((c,ci)=>`<div class="card plain cblock">
       <div class="row sp"><div class="row"><input class="clr" type="color" value="${c.hex}" data-ci="${ci}" data-d="hex" aria-label="اختار اللون"><b id="cn-${ci}">${esc(cname(c.hex))}</b></div>${d.colors.length>1?`<button class="btn bad sm" data-act="delcolor" data-ci="${ci}">حذف اللون</button>`:''}</div>
-      <div class="row" style="margin:6px 0">${c.img?`<img class="pv" style="width:72px;height:72px" src="${c.img}" alt="صورة اللون">`:''}<div><label class="hint">${c.img?'تغيير صورة اللون':'صورة لهذا اللون'}<input class="cimg" type="file" accept="image/*" data-ci="${ci}"></label>${c.img?`<div class="row" style="margin-top:4px"><button class="btn good sm" data-act="enhcolor" data-ci="${ci}">✨ حسّن</button>${c.imgOrig?`<button class="btn alt sm" data-act="origcolor" data-ci="${ci}">الأصلية</button>`:''}<button class="btn bad sm" data-act="delcimg" data-ci="${ci}">حذف</button></div>`:''}</div></div>
+      <div class="row" style="margin:6px 0">${c.img?`<img class="pv" style="width:72px;height:72px" src="${c.img}" alt="صورة اللون">`:''}<div><label class="hint">${c.img?'تغيير صورة اللون':'صورة لهذا اللون'}<input class="cimg" type="file" accept="image/*" data-ci="${ci}"></label> <button class="btn alt sm" type="button" data-act="camopen" data-t="color" data-ci="${ci}">📷 كاميرا</button>${c.img?`<div class="row" style="margin-top:4px"><button class="btn good sm" data-act="enhcolor" data-ci="${ci}">✨ حسّن</button><button class="btn alt sm" type="button" data-act="cutopen" data-t="color" data-ci="${ci}">✂️ عزل</button>${c.imgOrig?`<button class="btn alt sm" data-act="origcolor" data-ci="${ci}">الأصلية</button>`:''}<button class="btn bad sm" data-act="delcimg" data-ci="${ci}">حذف</button></div>${c.note?`<div class="hint" style="margin-top:4px;font-weight:700;color:${c.note[0]==='✓'?'#2d7a4f':c.note[0]==='⚠'?'#b36a00':'inherit'}">${esc(c.note)}</div>`:''}`:''}</div></div>
       ${c.rows.map((r,ri)=>`<div class="srow">${sizeSelect(r,ci,ri)}<input type="number" min="0" step="1" placeholder="عدد القطع" value="${esc(r.qty)}" data-ci="${ci}" data-ri="${ri}" data-f="qty" aria-label="عدد القطع"><button class="btn alt sm" data-act="delrow" data-ci="${ci}" data-ri="${ri}" aria-label="حذف المقاس">✕</button></div>`).join('')}
       <button class="btn alt sm" data-act="addrow" data-ci="${ci}">+ مقاس</button></div>`).join('')}</div>
     <div class="row" style="margin-top:12px"><button class="btn alt" data-act="addcolor">+ لون تاني</button><button class="btn" data-act="addprod">${ui.editId?'حفظ التعديلات':'انشر المنتج'}</button>${ui.editId?'<button class="btn alt" data-act="canceledit">إلغاء التعديل</button>':''}</div>
@@ -866,8 +866,8 @@ function viewMerchant(){
       <section><h2>منتجاتي</h2>${grid(mine,p=>`<div class="card plain"><div class="prod">${art(p)}<div><h3>${esc(p.name)}${vbadge(p.m)}</h3>${starsHTML(p.id)}<div class="meta">${CATS[p.cat]||''}</div><div class="meta num">سعرك ${money(p.price)}</div><div class="meta num">يظهر للمسوّق ${money(floorOf(p))}</div>${vmeta(p)}</div></div>
       <div class="row" style="margin-top:8px"><button class="btn sm" data-act="editprod" data-id="${p.id}">تعديل المنتج</button>${ui.confirmDel===p.id?`<span class="hint">متأكد من الحذف؟</span><button class="btn bad sm" data-act="delyes" data-id="${p.id}">نعم، احذف</button><button class="btn alt sm" data-act="delno">لا</button>`:`<button class="btn bad sm" data-act="delprod" data-id="${p.id}">حذف</button>`}</div>
       <label class="row" style="margin-top:8px;gap:8px;cursor:pointer"><input class="prt" type="checkbox" data-p="${p.id}" ${p.printable?'checked':''} style="width:auto"><span class="hint"><b>مناسب للطباعة</b> ${p.printable?'· ظاهر للمصممين':''}</span></label>
-      ${p.img?`<div class="row" style="margin-top:8px"><button class="btn good sm" data-act="enhprod" data-id="${p.id}">✨ حسّن صورة المنتج</button>${p.imgOrig?`<button class="btn alt sm" data-act="origprod" data-id="${p.id}">الأصلية</button>`:''}</div>`:''}
-      <div style="margin-top:8px"><label class="hint">${p.img?'تغيير صورة المنتج':'ضيف صورة للمنتج'}<input class="pimg" type="file" accept="image/*" data-p="${p.id}"></label></div>
+      ${p.img?`<div class="row" style="margin-top:8px"><button class="btn good sm" data-act="enhprod" data-id="${p.id}">✨ حسّن صورة المنتج</button><button class="btn alt sm" type="button" data-act="cutopen" data-t="prod" data-id="${p.id}">✂️ عزل المنتج</button>${p.imgOrig?`<button class="btn alt sm" data-act="origprod" data-id="${p.id}">الأصلية</button>`:''}</div>`:''}
+      <div style="margin-top:8px"><label class="hint">${p.img?'تغيير صورة المنتج':'ضيف صورة للمنتج'}<input class="pimg" type="file" accept="image/*" data-p="${p.id}"></label> <button class="btn alt sm" type="button" data-act="camopen" data-t="prod" data-id="${p.id}">📷 كاميرا المرشد</button></div>
       <div class="vgrid">${p.variants.map((x,i)=>`<span>${sw(x.color)}${esc(cname(x.color))}</span><span>${esc(x.size)}</span><input class="stk ${x.stock<=2?'low':''}" type="number" min="0" step="1" value="${x.stock}" data-p="${p.id}" data-i="${i}" aria-label="مخزون ${esc(x.color)} ${esc(x.size)}">`).join('')}</div></div>`,'ما أضفتش منتجات لسه.')}</section>`;
   }
   const ords=rev(S.orders.filter(o=>o.mid===id));
@@ -1121,6 +1121,7 @@ function modalHTML(){
   if(m.mode==='adkit')return adkitHTML(m);
   if(m.mode==='photo')return photoHTML(m);
   if(m.mode==='live')return liveHTML(m);
+  if(m.mode==='cam')return camHTML(m);
   const p=prodById(m.pid),f=floorOf(p);
   const isRes=m.mode==='reseller';
   return `<div class="ov" data-act="closeov"><div class="sheet" role="dialog" aria-label="طلب جديد">
@@ -1230,13 +1231,13 @@ function act(a,d,e){
     $('#o-size').innerHTML=availSizes(p,d.c).map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
     $('#o-cname').textContent=cname(d.c);$('#o-art').innerHTML=art(p,d.c);stockHint();return;
   }
-  else if(a==='enhmain'){const D=ui.draft,src=D.imgOrig||D.img;enhanceThen(src,u=>{D.imgOrig=src;D.img=u;render();});return;}
+  else if(a==='enhmain'){const D=ui.draft,src=D.imgOrig||D.img;enhanceThen(src,u=>{D.imgOrig=src;D.img=u;render();},{keep:!!D.printable});return;}
   else if(a==='origmain'){const D=ui.draft;if(D.imgOrig){D.img=D.imgOrig;D.imgOrig='';}}
-  else if(a==='enhcolor'){const c=ui.draft.colors[+d.ci],src=c.imgOrig||c.img;enhanceThen(src,u=>{c.imgOrig=src;c.img=u;render();});return;}
+  else if(a==='enhcolor'){const c=ui.draft.colors[+d.ci],src=c.imgOrig||c.img;enhanceThen(src,u=>{c.imgOrig=src;c.img=u;render();},{keep:!!ui.draft.printable});return;}
   else if(a==='origcolor'){const c=ui.draft.colors[+d.ci];if(c.imgOrig){c.img=c.imgOrig;c.imgOrig='';}}
-  else if(a==='enhprod'){const p=prodById(d.id);if(!p||!p.img)return;const src=p.imgOrig||p.img;enhanceThen(src,u=>{p.imgOrig=src;p.img=u;save();render();});return;}
+  else if(a==='enhprod'){const p=prodById(d.id);if(!p||!p.img)return;const src=p.imgOrig||p.img;enhanceThen(src,u=>{p.imgOrig=src;p.img=u;save();render();},{keep:frameLocked(p)});return;}
   else if(a==='origprod'){const p=prodById(d.id);if(p&&p.imgOrig){p.img=p.imgOrig;p.imgOrig='';save();}}
-  else if(a==='delimg'){ui.draft.img='';ui.draft.imgOrig='';}
+  else if(a==='delimg'){ui.draft.img='';ui.draft.imgOrig='';ui.draft.imgNote='';}
   else if(a==='delcimg'){ui.draft.colors[+d.ci].img='';}
   else if(a==='editprod'){
     const p=prodById(d.id);if(!p)return;
@@ -1417,6 +1418,21 @@ function act(a,d,e){
   else if(a==='akdl'){const m=ui.modal;if(!m||!m.png){toast('الصورة لسه بتتجهّز');return;}const x=document.createElement('a');x.href=m.png;x.download='souq-nile-ad.png';document.body.appendChild(x);x.click();x.remove();return;}
   else if(a==='akshare'){const m=ui.modal;if(!m||!m.png){toast('الصورة لسه بتتجهّز');return;}Promise.resolve().then(()=>{const bin=atob(m.png.split(',')[1]),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);const f=new File([u],'souq-nile-ad.png',{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[f]}))return navigator.share({files:[f],text:adCaps(prodById(m.ak),m.price,m.link)[0][1]});toast('المشاركة مش مدعومة هنا. حمّل الصورة وابعتها');}).catch(()=>{});return;}
   else if(a==='installapp'){if(V3.inst){V3.inst.prompt();V3.inst=null;}else toast('على آيفون: زر المشاركة ثم "إضافة إلى الشاشة الرئيسية". على أندرويد: قائمة المتصفح ثم "تثبيت التطبيق"');return;}
+  else if(a==='camclose'){camStop(ui.modal);ui.modal=null;}
+  else if(a==='camshot'){camShot();return;}
+  else if(a==='camuse'){camUse();return;}
+  else if(a==='camtool'){if(ui.modal)ui.modal.tool=d.v;}
+  else if(a==='cameff'){if(ui.modal){ui.modal.eff=d.v;}}
+  else if(a==='camview'){if(ui.modal)ui.modal.view=ui.modal.view==='sel'?'res':'sel';}
+  else if(a==='camundo'){const m=camMod();if(m&&m.ops.length){m.ops.pop();if(m.ops.length)camSeg(m);else m.mask=null;}}
+  else if(a==='camopen'){
+    if(d.t==='main')camOpen({done:(u,w,h)=>mainPhoto(u,w,h)});
+    else if(d.t==='color'){const ci=+d.ci;camOpen({done:(u,w,h)=>colorPhoto(ci,u,w,h)});}
+    else if(d.t==='prod'){const pp=prodById(d.id);camOpen({done:(u,w,h)=>prodPhoto(pp,u,w,h)});}}
+  else if(a==='cutopen'){
+    if(d.t==='main'){const D=ui.draft,src=D.img;camOpen({img:src,done:(u,w,h,orig)=>{D.imgOrig=D.imgOrig||src;D.img=u;D.imgNote='✂️ اتعزل المنتج عن الخلفية';render();}});}
+    else if(d.t==='color'){const c=ui.draft.colors[+d.ci],src=c.img;camOpen({img:src,done:(u)=>{c.imgOrig=c.imgOrig||src;c.img=u;c.note='✂️ اتعزل المنتج عن الخلفية';render();}});}
+    else if(d.t==='prod'){const pp=prodById(d.id);if(!pp||!pp.img)return;const src=pp.img;camOpen({img:src,done:(u)=>{pp.imgOrig=pp.imgOrig||src;pp.img=u;save();render();toast('اتعزل المنتج عن الخلفية');}});}}
   else if(a==='livemap'){const m={mode:'live',id:d.id,d:null,fit:false};ui.modal=m;render();livePoll(m);return;}
   else if(a==='geoset'){geoGet().then(p=>{V3.geo=p;document.querySelectorAll('.geo-st').forEach(e=>{e.textContent='✓ تم تحديد موقع التوصيل';});toast('اتحدد موقعك ✓');}).catch(er=>toast(er.message));return;}
   else if(a==='showph'){signed(d.b||'proofs',d.p).then(u=>{ui.modal={mode:'photo',url:u,t:d.t};render();}).catch(er=>toast(errMsg(er)));return;}
@@ -1536,7 +1552,7 @@ function readImage(file,cb){
       const M=640,k=Math.min(1,M/Math.max(im.width,im.height));
       const cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);
       cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
-      cb(cv.toDataURL('image/jpeg',0.78));
+      cb(cv.toDataURL('image/jpeg',0.78),im.width,im.height);
     };
     im.onerror=()=>toast('مقدرتش أقرا الصورة دي');
     im.src=fr.result;
@@ -1544,7 +1560,8 @@ function readImage(file,cb){
   fr.readAsDataURL(file);
 }
 /* ---------- photo enhance (runs in the browser) ---------- */
-function enhanceImage(src){
+function enhanceImage(src,opt){
+  const keep=!!(opt&&opt.keep);
   return new Promise((res,rej)=>{
     const im=new Image();
     im.onerror=()=>rej(new Error('img'));
@@ -1565,7 +1582,7 @@ function enhanceImage(src){
       for(let x=0;x<W;x++){push(x,0);push(x,H-1);}for(let y=0;y<H;y++){push(0,y);push(W-1,y);}
       while(stack.length){const p=stack.pop(),x=p%W,y=(p/W)|0;if(x>0)push(x-1,y);if(x<W-1)push(x+1,y);if(y>0)push(x,y-1);if(y<H-1)push(x,y+1);}
       let bgN=0;for(let p=0;p<N;p++)bgN+=mask[p];
-      const frac=bgN/N,useBg=frac>0.12&&frac<0.93;
+      const frac=bgN/N,useBg=!keep&&frac>0.12&&frac<0.93;
       /* 2. auto levels on the subject (or whole picture) */
       const hist=[new Uint32Array(256),new Uint32Array(256),new Uint32Array(256)];let cnt=0;
       for(let p=0;p<N;p++){if(useBg&&mask[p])continue;const i=p*4;hist[0][d[i]]++;hist[1][d[i+1]]++;hist[2][d[i+2]]++;cnt++;}
@@ -1578,13 +1595,19 @@ function enhanceImage(src){
         const i=p*4,x=p%W,y=(p/W)|0;
         if(useBg&&mask[p]){d[i]=d[i+1]=d[i+2]=255;continue;}
         let r=lut[d[i]],g=lut[d[i+1]],b=lut[d[i+2]];
-        const l=.3*r+.59*g+.11*b,sat=1.12;r=l+(r-l)*sat;g=l+(g-l)*sat;b=l+(b-l)*sat;
+        const l=.3*r+.59*g+.11*b,sat=keep?1:1.12;r=l+(r-l)*sat;g=l+(g-l)*sat;b=l+(b-l)*sat;
         d[i]=r<0?0:r>255?255:r;d[i+1]=g<0?0:g>255?255:g;d[i+2]=b<0?0:b>255?255:b;
         if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
       }
       /* soften the cut-out edge */
       if(useBg){for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const p=y*W+x;if(mask[p])continue;if(mask[p-1]||mask[p+1]||mask[p-W]||mask[p+W]){const i=p*4;d[i]=(d[i]+255)>>1;d[i+1]=(d[i+1]+255)>>1;d[i+2]=(d[i+2]+255)>>1;}}}
       cx.putImageData(id,0,0);
+      const sharpen=(oc,w,h)=>{try{const od=oc.getImageData(0,0,w,h),o=od.data,cp=new Uint8ClampedArray(o);
+        for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=(y*w+x)*4;for(let c=0;c<3;c++){const v=cp[i+c]*5-cp[i+c-4]-cp[i+c+4]-cp[i+c-w*4]-cp[i+c+w*4];o[i+c]=cp[i+c]*.7+v*.3;}}
+        oc.putImageData(od,0,0);}catch(e){}};
+      if(keep){/* printable blank: same frame, same size, nothing moves, only light/contrast/sharpness */
+        const k2=document.createElement('canvas');k2.width=W;k2.height=H;const kc=k2.getContext('2d');kc.drawImage(cv,0,0);sharpen(kc,W,H);
+        res({url:k2.toDataURL('image/jpeg',0.88),cleaned:false,kept:true});return;}
       /* 3. crop around the subject into a square with a white frame */
       let sx=0,sy=0,sw=W,sh=H;
       if(useBg&&x1>x0&&y1>y0){const pad=Math.round(Math.max(x1-x0,y1-y0)*.08);sx=Math.max(0,x0-pad);sy=Math.max(0,y0-pad);sw=Math.min(W,x1+pad)-sx;sh=Math.min(H,y1+pad)-sy;}
@@ -1602,9 +1625,9 @@ function enhanceImage(src){
     im.src=src;
   });
 }
-function enhanceThen(src,done){
+function enhanceThen(src,done,opt){
   toast('بحسّن الصورة...');
-  enhanceImage(src).then(r=>{done(r.url);toast(r.cleaned?'اتحسّنت الصورة واتنضّفت الخلفية':'اتحسّنت الصورة (الخلفية مش سادة فسبتها)');}).catch(()=>toast('معرفتش أحسّن الصورة دي'));
+  enhanceImage(src,opt).then(r=>{done(r.url);toast(r.kept?'اتحسّنت الإضاءة والوضوح (من غير ما الإطار يتغيّر)':r.cleaned?'اتحسّنت الصورة واتنضّفت الخلفية':'اتحسّنت الصورة (الخلفية مش سادة فسبتها)');}).catch(()=>toast('معرفتش أحسّن الصورة دي'));
 }
 let dragEl=null;
 function dragTo(e){
@@ -1626,13 +1649,48 @@ function readDesign(file,cb){
     im.onerror=()=>toast('مقدرتش أقرا الصورة دي');im.src=fr.result;};
   fr.readAsDataURL(file);
 }
-function loadImage(file){readImage(file,u=>{ui.draft.img=u;ui.draft.imgOrig='';render();toast('اتضافت الصورة');});}
+
+/* ---------- photo quality check (runs in the browser) ---------- */
+function analyzeImage(url,ow,oh){
+  return new Promise(res=>{const im=new Image();im.onerror=()=>res(null);im.onload=()=>{
+    const M=320,k=Math.min(1,M/Math.max(im.width,im.height)),W=Math.max(8,Math.round(im.width*k)),H=Math.max(8,Math.round(im.height*k));
+    const cv=document.createElement('canvas');cv.width=W;cv.height=H;const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(im,0,0,W,H);
+    const d=cx.getImageData(0,0,W,H).data,N=W*H,g=new Float32Array(N),h=new Uint32Array(256);let sum=0;
+    for(let p=0;p<N;p++){const v=.3*d[p*4]+.59*d[p*4+1]+.11*d[p*4+2];g[p]=v;h[v|0]++;sum+=v;}
+    const mean=sum/N,pc=q=>{let a=0,t=N*q;for(let v=0;v<256;v++){a+=h[v];if(a>=t)return v;}return 255;};
+    const lo=pc(.02),hi=pc(.98),spread=hi-lo;
+    let ls=0,ls2=0,n=0;for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const p=y*W+x,l=4*g[p]-g[p-1]-g[p+1]-g[p-W]-g[p+W];ls+=l;ls2+=l*l;n++;}
+    const lv=ls2/n-(ls/n)*(ls/n),sharp=lv/Math.max(400,spread*spread);
+    res({mean,spread,sharp,w:ow||im.width,h:oh||im.height});};im.src=url;});}
+function qualityVerdict(m){
+  if(!m)return {act:'none',note:''};
+  const issues=[],fix=[];let retake=false;
+  if(Math.min(m.w,m.h)<450){issues.push('الصورة صغيرة ومش واضحة');retake=true;}
+  if(m.sharp<0.0035){issues.push('الصورة مهزوزة أو مش واضحة');retake=true;}
+  if(m.mean<85){issues.push('غامقة');fix.push('الإضاءة');}
+  else if(m.mean>228){issues.push('فاتحة زيادة');fix.push('الإضاءة');}
+  if(m.spread<120){issues.push('باهتة وألوانها مش واضحة');fix.push('التباين');}
+  if(!issues.length)return {act:'none',note:'✓ صورة ممتازة، سبناها زي ما هي'};
+  const act=fix.length?'enhance':'none';
+  let note='⚠ '+issues.join(' و')+(act==='enhance'?' · اتحسّنت تلقائي (الأصلية محفوظة)':'');
+  if(retake)note+=' · الأحسن تصوّرها تاني قدام نور كويس وتثبّت الموبايل';
+  return {act,note};}
+function autoPhoto(url,ow,oh,keep,apply){
+  analyzeImage(url,ow,oh).then(m=>{const v=qualityVerdict(m);
+    if(v.act==='enhance'){enhanceImage(url,{keep}).then(r=>{apply(r.url,url,v.note);}).catch(()=>apply(url,'',v.note));}
+    else apply(url,'',v.note);});}
+const frameLocked=p=>!!(p&&(p.printable||(S.products||[]).some(x=>x.pod&&x.base===p.id)));
+function mainPhoto(u,ow,oh){ui.draft.img=u;ui.draft.imgOrig='';ui.draft.imgNote='⏳ بنفحص الصورة...';render();
+  autoPhoto(u,ow,oh,true,(nu,orig,note)=>{ui.draft.img=nu;ui.draft.imgOrig=orig;ui.draft.imgNote=note;render();});}
+function colorPhoto(ci,u,ow,oh){const c=ui.draft.colors[ci];if(!c)return;c.img=u;c.imgOrig='';c.note='⏳ بنفحص الصورة...';render();autoPhoto(u,ow,oh,true,(nu,orig,note)=>{c.img=nu;c.imgOrig=orig;c.note=note;render();});}
+function prodPhoto(p,u,ow,oh){if(!p)return;p.img=u;p.imgOrig='';save();render();autoPhoto(u,ow,oh,true,(nu,orig,note)=>{p.img=nu;p.imgOrig=orig;save();render();toast(note);});}
+function loadImage(file){readImage(file,mainPhoto);}
 document.addEventListener('change',e=>{
   if(e.target.id&&e.target.id.startsWith('c-')){ui.cf=ui.cf||{};ui.cf[e.target.id]=e.target.value;return;}
   if(e.target.id==='np-imgs'){const fl=[...(e.target.files||[])].slice(0,3-(ui.draft.imgs||[]).length);ui.draft.imgs=ui.draft.imgs||[];fl.forEach(f=>readImage(f,u=>{if(ui.draft.imgs.length<3){ui.draft.imgs.push(u);render();}}));return;}
   if(e.target.id==='np-img'){loadImage(e.target.files&&e.target.files[0]);return;}
-  if(e.target.classList.contains('cimg')){const ci=+e.target.dataset.ci;readImage(e.target.files&&e.target.files[0],u=>{ui.draft.colors[ci].img=u;ui.draft.colors[ci].imgOrig='';render();toast('اتضافت صورة اللون');});return;}
-  if(e.target.classList.contains('pimg')){const p=prodById(e.target.dataset.p);readImage(e.target.files&&e.target.files[0],u=>{if(p){p.img=u;p.imgOrig='';save();render();toast('اتحدّثت صورة المنتج');}});return;}
+  if(e.target.classList.contains('cimg')){const ci=+e.target.dataset.ci;readImage(e.target.files&&e.target.files[0],(u,ow,oh)=>colorPhoto(ci,u,ow,oh));return;}
+  if(e.target.classList.contains('pimg')){const p=prodById(e.target.dataset.p);readImage(e.target.files&&e.target.files[0],(u,ow,oh)=>prodPhoto(p,u,ow,oh));return;}
   if(e.target.id==='np-grp'){const g=GROUPS.find(x=>x.k===e.target.value);if(g){ui.draft.cat=g.leaf[0][0];ui.draft.colors.forEach(c=>c.rows.forEach(x=>x.size=''));render();}return;}
   if(e.target.id==='np-cat'){ui.draft.cat=e.target.value;ui.draft.colors.forEach(c=>c.rows.forEach(x=>x.size=''));render();return;}
   if(e.target.id==='np-prt'){ui.draft.printable=e.target.checked;return;}
@@ -2113,6 +2171,156 @@ function coWatch(){
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&CO.wid!=null){try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(()=>{});}catch(e){}}});
 setInterval(coWatch,10000);
 
+/* ===== GUIDED CAMERA + SUBJECT CUT-OUT ===== */
+function fitURL(src,cb){const im=new Image();im.onload=()=>{const M=640,k=Math.min(1,M/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.max(2,Math.round(im.width*k));cv.height=Math.max(2,Math.round(im.height*k));cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);cb(cv.toDataURL('image/jpeg',0.84),im.width,im.height);};im.onerror=()=>toast('مقدرتش أقرا الصورة دي');im.src=src;}
+function camOpen(o){ui.modal={mode:'cam',stage:o.img?'edit':'cam',done:o.done,img:o.img||'',eff:'blur',ops:[],tol:36,tool:'add',view:'sel',err:'',msg:'',ok:false,hist:[]};render();}
+function camStop(m){try{if(m&&m.stream)m.stream.getTracks().forEach(t=>t.stop());}catch(e){}if(m){m.stream=null;if(m.iv){clearInterval(m.iv);m.iv=null;}}}
+function camClose(){const m=ui.modal;camStop(m);ui.modal=null;render();}
+function camHTML(m){
+  const head=`<div class="row sp"><h2 style="margin:0">${m.stage==='cam'?'📷 كاميرا المرشد':'✂️ عزل المنتج'}</h2><button class="btn alt sm" data-act="camclose" type="button" aria-label="إغلاق">✕</button></div>`;
+  let body='';
+  if(m.stage==='cam'){
+    body=`<div id="cm-box" style="position:relative;margin:10px auto 0;border-radius:14px;overflow:hidden;background:#111;border:6px solid #d62828;aspect-ratio:3/4;max-height:60vh;width:min(100%,calc(60vh * 0.75))">
+      <video id="cm-v" playsinline muted autoplay style="width:100%;height:100%;object-fit:cover;display:block"></video>
+      <div id="cm-g" style="position:absolute;left:0;right:0;top:0;padding:8px 10px;text-align:center;color:#fff;font-weight:700;font-size:15px;background:#000b">${m.err?esc(m.err):'⏳ بنفتح الكاميرا...'}</div>
+      <img alt="" width="1" height="1" style="position:absolute;opacity:0" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" onload="camInit()"></div>
+    <div class="row" style="margin-top:10px;justify-content:center;gap:8px"><button class="btn" id="cm-shot" data-act="camshot" type="button" style="min-width:150px">📸 صوّر</button>
+    <label class="btn alt" style="cursor:pointer">🖼️ من المعرض<input id="cm-file" type="file" accept="image/*" style="display:none"></label></div>
+    <div class="hint" style="margin-top:6px;text-align:center">الإطار الأحمر = لسه محتاج تظبط · الأخضر = جاهز. حط المنتج على خلفية سادة قدّام نور كويس.</div>`;
+  }else{
+    body=`<div class="hint" id="cm-h" style="margin:8px 0">${m.ops.length?'اضغط على أجزاء تانية من المنتج لو ما اتحددش كله، أو على ➖ لحذف جزء زيادة.':'👆 اضغط على المنتج في الصورة عشان نحدده.'}</div>
+    <div style="text-align:center"><canvas id="cm-cv" style="max-width:100%;border-radius:12px;border:1px solid var(--gold);touch-action:manipulation;background:#eee"></canvas></div>
+    <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap"><button class="btn ${m.tool==='add'?'':'alt'} sm" data-act="camtool" data-v="add" type="button">➕ حدّد منتج</button><button class="btn ${m.tool==='sub'?'':'alt'} sm" data-act="camtool" data-v="sub" type="button">➖ شيل جزء</button><button class="btn alt sm" data-act="camundo" type="button">↶ تراجع</button><button class="btn alt sm" data-act="camview" type="button">${m.view==='sel'?'👁 معاينة النتيجة':'✏️ رجوع للتحديد'}</button></div>
+    <label class="hint" style="display:block;margin-top:8px">حساسية التحديد (وسّع ← → ضيّق)<input id="cm-tol" type="range" min="12" max="90" value="${m.tol}" style="width:100%"></label>
+    <div class="row" style="margin-top:6px;gap:6px"><span class="hint">الخلفية:</span><button class="btn ${m.eff==='blur'?'':'alt'} sm" data-act="cameff" data-v="blur" type="button">بلور</button><button class="btn ${m.eff==='white'?'':'alt'} sm" data-act="cameff" data-v="white" type="button">بيضا نضيفة</button><button class="btn ${m.eff==='none'?'':'alt'} sm" data-act="cameff" data-v="none" type="button">من غير تغيير</button></div>
+    <div class="row" style="margin-top:12px;gap:8px"><button class="btn good" data-act="camuse" type="button">✔ استخدم الصورة</button><button class="btn alt" data-act="camclose" type="button">إلغاء</button></div>
+    <img alt="" width="1" height="1" style="position:absolute;opacity:0" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" onload="camEditInit()">`;
+  }
+  return `<div class="ov"><div class="sheet" role="dialog" aria-label="كاميرا المرشد" style="max-width:600px">${head}${body}</div></div>`;}
+function camMod(){const m=ui.modal;return(m&&m.mode==='cam')?m:null;}
+/* ---------- live guidance ---------- */
+function camInit(){
+  const m=camMod();if(!m||m.stage!=='cam')return;const v=document.getElementById('cm-v');if(!v)return;
+  const f=document.getElementById('cm-file');if(f&&!f._b){f._b=1;f.addEventListener('change',()=>{const fl=f.files&&f.files[0];if(!fl)return;const fr=new FileReader();fr.onload=()=>{camStop(m);fitURL(fr.result,(u)=>{m.img=u;m.stage='edit';m.ops=[];render();});};fr.readAsDataURL(fl);});}
+  const go=()=>{if(m.iv)clearInterval(m.iv);m.iv=setInterval(()=>camTick(m),250);};
+  if(m.stream){v.srcObject=m.stream;v.play().catch(()=>{});go();return;}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){m.err='الكاميرا مش متاحة على المتصفح ده. اختار صورة من المعرض.';const g=document.getElementById('cm-g');if(g)g.textContent=m.err;return;}
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}},audio:false}).then(st=>{
+    if(ui.modal!==m){st.getTracks().forEach(t=>t.stop());return;}
+    m.stream=st;const v2=document.getElementById('cm-v');if(v2){v2.srcObject=st;v2.play().catch(()=>{});}go();
+  }).catch(e=>{m.err='مقدرتش أفتح الكاميرا ('+((e&&e.name==='NotAllowedError')?'من فضلك اسمح للموقع بالكاميرا':'مش لاقي كاميرا')+'). تقدر تختار صورة من المعرض.';const g=document.getElementById('cm-g');if(g)g.textContent=m.err;});}
+function camFrame(m,w){const v=document.getElementById('cm-v'),box=document.getElementById('cm-box');if(!v||!box||!v.videoWidth)return null;
+  const bw=box.clientWidth,bh=box.clientHeight,vw=v.videoWidth,vh=v.videoHeight,s=Math.max(bw/vw,bh/vh),sw=bw/s,sh=bh/s,sx=(vw-sw)/2,sy=(vh-sh)/2,h=Math.max(8,Math.round(w*sh/sw));
+  const cv=m.fc||(m.fc=document.createElement('canvas'));cv.width=w;cv.height=h;cv.getContext('2d',{willReadFrequently:true}).drawImage(v,sx,sy,sw,sh,0,0,w,h);return cv;}
+function camAnalyze(cv){
+  const W=cv.width,H=cv.height,d=cv.getContext('2d',{willReadFrequently:true}).getImageData(0,0,W,H).data,N=W*H,g=new Float32Array(N),h=new Uint32Array(256);let sum=0;
+  for(let p=0;p<N;p++){const v=.3*d[p*4]+.59*d[p*4+1]+.11*d[p*4+2];g[p]=v;h[v|0]++;sum+=v;}
+  const mean=sum/N,pc=q=>{let a=0,t=N*q;for(let v=0;v<256;v++){a+=h[v];if(a>=t)return v;}return 255;},spread=pc(.98)-pc(.02);
+  const lh=new Uint32Array(1024);for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const p=y*W+x,l=Math.abs(4*g[p]-g[p-1]-g[p+1]-g[p-W]-g[p+W]);lh[Math.min(1023,l|0)]++;}
+  let kk=Math.round(N*0.004),acc=0,tops=0;for(let v=1023;v>=0&&kk>0;v--){const c=Math.min(kk,lh[v]);acc+=c*v;kk-=c;tops+=c;}
+  const sharp=(tops?acc/tops:0)/Math.max(40,spread);
+  let L=0,R=0,T=0,B=0,nl=0,nr=0,nt=0,nb=0;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const v=g[y*W+x];if(x<W/3){L+=v;nl++;}else if(x>=2*W/3){R+=v;nr++;}if(y<H/3){T+=v;nt++;}else if(y>=2*H/3){B+=v;nb++;}}
+  L/=nl;R/=nr;T/=nt;B/=nb;
+  /* subject = what differs from the border colour */
+  const bs=[[],[],[]],ring=Math.max(2,Math.round(Math.min(W,H)*.07));
+  for(let y=0;y<H;y+=2)for(let x=0;x<W;x+=2){if(x<ring||x>=W-ring||y<ring||y>=H-ring){const i=(y*W+x)*4;bs[0].push(d[i]);bs[1].push(d[i+1]);bs[2].push(d[i+2]);}}
+  const med=a=>{a.sort((p,q)=>p-q);return a[a.length>>1];},bg=[med(bs[0]),med(bs[1]),med(bs[2])];
+  const hx=new Uint32Array(W),hy=new Uint32Array(H);let cnt=0;
+  for(let y=ring;y<H-ring;y++)for(let x=ring;x<W-ring;x++){const i=(y*W+x)*4,a=d[i]-bg[0],b=d[i+1]-bg[1],c=d[i+2]-bg[2];if(a*a+b*b+c*c>38*38){hx[x]++;hy[y]++;cnt++;}}
+  const frac=cnt/N,q=(a,t)=>{let s=0;for(let i=0;i<a.length;i++){s+=a[i];if(s>=cnt*t)return i;}return a.length-1;};
+  let bb=null;if(cnt>20)bb={x0:q(hx,.03)/W,x1:q(hx,.97)/W,y0:q(hy,.03)/H,y1:q(hy,.97)/H};
+  let msg,ok=false;
+  if(mean<70)msg='💡 الإضاءة ضعيفة — زوّد الإضاءة';
+  else if(mean>218)msg='☀️ الإضاءة قوية زيادة — قلّلها أو بعّد عن اللمبة';
+  else if(!bb||frac<0.05)msg='🔍 مش شايف المنتج — حطه على خلفية سادة وقرّب';
+  else if(sharp<0.3)msg='✋ ثبّت الموبايل وانتظر الفوكس';
+  else{
+    const cx=(bb.x0+bb.x1)/2,cy=(bb.y0+bb.y1)/2,touch=bb.x0<.03||bb.x1>.97||bb.y0<.03||bb.y1>.97;
+    if(touch||frac>0.72)msg='↔️ المنتج كبير زيادة — بعّد الموبايل شوية';
+    else if(frac<0.16)msg='🔎 قرّب شوية من المنتج';
+    else if(cx-.5>.13)msg='➡️ المنتج ناحية اليمين — حرّك الموبايل شوية لليمين';
+    else if(.5-cx>.13)msg='⬅️ المنتج ناحية الشمال — حرّك الموبايل شوية للشمال';
+    else if(cy-.5>.14)msg='⬇️ المنتج واطي — حرّك الموبايل لتحت شوية';
+    else if(.5-cy>.14)msg='⬆️ المنتج عالي — حرّك الموبايل لفوق شوية';
+    else if(Math.abs(L-R)>50)msg='💡 النور مش متساوي — '+(L<R?'الجنب الشمال أغمق، وجّه نور ناحيته':'الجنب اليمين أغمق، وجّه نور ناحيته');
+    else if(Math.abs(T-B)>60)msg='💡 النور مش متساوي — '+(T<B?'فوق أغمق، زوّد نور من فوق':'تحت أغمق، زوّد نور من تحت');
+    else{msg='✅ ممتاز! ثبّت وصوّر';ok=true;}}
+  return {msg,ok,mean,sharp,frac};}
+function camTick(m){
+  if(ui.modal!==m||m.stage!=='cam'){camStop(m);return;}
+  const cv=camFrame(m,320);if(!cv)return;const r=camAnalyze(cv);m.last=r;
+  m.hist.push(r.ok);if(m.hist.length>3)m.hist.shift();const good=m.hist.length>=3&&m.hist.every(Boolean);
+  const box=document.getElementById('cm-box'),g=document.getElementById('cm-g'),b=document.getElementById('cm-shot');
+  if(box)box.style.borderColor=good?'#1fa84f':'#d62828';
+  if(g){g.textContent=good?'✅ ممتاز! ثبّت وصوّر':r.msg;g.style.background=good?'#1fa84fcc':'#000b';}
+  if(b)b.style.background=good?'#1fa84f':'';
+  m.ok=good;}
+function camShot(){const m=camMod();if(!m||m.stage!=='cam')return;const v=document.getElementById('cm-v'),box=document.getElementById('cm-box');
+  if(!v||!v.videoWidth){toast('الكاميرا لسه ما اشتغلتش');return;}
+  const bw=box.clientWidth,bh=box.clientHeight,vw=v.videoWidth,vh=v.videoHeight,s=Math.max(bw/vw,bh/vh),sw=bw/s,sh=bh/s,sx=(vw-sw)/2,sy=(vh-sh)/2,k=Math.min(1,1280/Math.max(sw,sh));
+  const cv=document.createElement('canvas');cv.width=Math.round(sw*k);cv.height=Math.round(sh*k);cv.getContext('2d').drawImage(v,sx,sy,sw,sh,0,0,cv.width,cv.height);
+  const url=cv.toDataURL('image/jpeg',0.9);camStop(m);fitURL(url,(u)=>{m.img=u;m.stage='edit';m.ops=[];m.view='sel';render();});}
+/* ---------- subject selection ---------- */
+function camEditInit(){
+  const m=camMod();if(!m||m.stage!=='edit')return;const cv=document.getElementById('cm-cv');if(!cv)return;
+  const draw=()=>{const B=m.base;cv.width=B.width;cv.height=B.height;camPaint(m);};
+  if(!cv._b){cv._b=1;cv.addEventListener('pointerdown',e=>{const mm=camMod();if(!mm||!mm.base)return;const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+    mm.ops.push({t:mm.tool,x,y});camSeg(mm);if(mm.tool==='add'&&mm.frac>0.9){mm.ops.pop();if(mm.ops.length)camSeg(mm);else mm.mask=null;toast('ده شكله الخلفية. اضغط على المنتج نفسه أو ضيّق الحساسية');}camPaint(mm);const h=document.getElementById('cm-h');if(h)h.textContent='اضغط على أجزاء تانية من المنتج لو ما اتحددش كله، أو على ➖ لحذف جزء زيادة.';});
+    const tl=document.getElementById('cm-tol');if(tl)tl.addEventListener('input',()=>{const mm=camMod();if(!mm)return;mm.tol=+tl.value;if(mm.ops.length){camSeg(mm);camPaint(mm);}});}
+  if(m.base&&m.base._src===m.img){draw();return;}
+  const im=new Image();im.onload=()=>{const B=document.createElement('canvas');B.width=im.width;B.height=im.height;B.getContext('2d',{willReadFrequently:true}).drawImage(im,0,0);B._src=m.img;m.base=B;
+    const k=Math.min(1,320/Math.max(im.width,im.height)),w=Math.max(2,Math.round(im.width*k)),h=Math.max(2,Math.round(im.height*k)),wk=document.createElement('canvas');wk.width=w;wk.height=h;const x=wk.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,w,h);m.wk={w,h,d:x.getImageData(0,0,w,h).data};m.mask=null;draw();if(m.ops.length){camSeg(m);camPaint(m);}};
+  im.src=m.img;}
+function camSeg(m){
+  const {w,h,d}=m.wk,N=w*h,mask=new Uint8Array(N),tol=m.tol,tl=tol*0.45,tg=tol*2.4;
+  const col=p=>[d[p*4],d[p*4+1],d[p*4+2]];
+  const dist=(a,b)=>{const x=a[0]-b[0],y=a[1]-b[1],z=a[2]-b[2];return Math.sqrt(x*x+y*y+z*z);};
+  for(const op of m.ops){
+    const sx=Math.min(w-1,Math.max(0,Math.round(op.x*(w-1)))),sy=Math.min(h-1,Math.max(0,Math.round(op.y*(h-1))));
+    let r=0,g=0,b=0,c=0;for(let yy=-2;yy<=2;yy++)for(let xx=-2;xx<=2;xx++){const x=sx+xx,y=sy+yy;if(x<0||y<0||x>=w||y>=h)continue;const p=y*w+x;r+=d[p*4];g+=d[p*4+1];b+=d[p*4+2];c++;}
+    const seed=[r/c,g/c,b/c],seen=new Uint8Array(N),st=[sy*w+sx];seen[st[0]]=1;
+    if(op.t==='sub'&&!mask[st[0]])continue;
+    while(st.length){const p=st.pop(),x=p%w,y=(p/w)|0,cp=col(p);
+      if(op.t==='add')mask[p]=1;else mask[p]=0;
+      const nb=[];if(x>0)nb.push(p-1);if(x<w-1)nb.push(p+1);if(y>0)nb.push(p-w);if(y<h-1)nb.push(p+w);
+      for(const q of nb){if(seen[q])continue;seen[q]=1;if(op.t==='sub'&&!mask[q])continue;const cq=col(q);if(dist(cq,cp)<tl&&dist(cq,seed)<tg)st.push(q);}}
+  }
+  /* fill holes that are enclosed by the subject */
+  const bgR=new Uint8Array(N),st=[];const push=p=>{if(!mask[p]&&!bgR[p]){bgR[p]=1;st.push(p);}};
+  for(let x=0;x<w;x++){push(x);push((h-1)*w+x);}for(let y=0;y<h;y++){push(y*w);push(y*w+w-1);}
+  while(st.length){const p=st.pop(),x=p%w,y=(p/w)|0;if(x>0)push(p-1);if(x<w-1)push(p+1);if(y>0)push(p-w);if(y<h-1)push(p+w);}
+  for(let p=0;p<N;p++)if(!mask[p]&&!bgR[p])mask[p]=1;
+  /* smooth with a 3x3 majority */
+  const out=new Uint8Array(N);for(let y=0;y<h;y++)for(let x=0;x<w;x++){let s=0,c=0;for(let yy=-1;yy<=1;yy++)for(let xx=-1;xx<=1;xx++){const X=x+xx,Y=y+yy;if(X<0||Y<0||X>=w||Y>=h)continue;s+=mask[Y*w+X];c++;}out[y*w+x]=s*2>c?1:0;}
+  m.mask=out;
+  let cnt=0;for(let p=0;p<N;p++)cnt+=out[p];m.frac=cnt/N;}
+function camMaskCanvas(m,W,H){
+  const {w,h}=m.wk,sm=document.createElement('canvas');sm.width=w;sm.height=h;const sx=sm.getContext('2d'),id=sx.createImageData(w,h);
+  for(let p=0;p<w*h;p++){id.data[p*4+3]=m.mask[p]?255:0;}sx.putImageData(id,0,0);
+  const mid=document.createElement('canvas');mid.width=Math.max(2,Math.round(W/3));mid.height=Math.max(2,Math.round(H/3));const mc=mid.getContext('2d');mc.imageSmoothingEnabled=true;mc.drawImage(sm,0,0,mid.width,mid.height);
+  const big=document.createElement('canvas');big.width=W;big.height=H;const bc=big.getContext('2d');bc.imageSmoothingEnabled=true;bc.drawImage(mid,0,0,W,H);return big;}
+function camSoft(src,W,H,div){const mk=(w,h)=>{const c=document.createElement('canvas');c.width=Math.max(2,Math.round(w));c.height=Math.max(2,Math.round(h));const x=c.getContext('2d');x.imageSmoothingEnabled=true;return c;};
+  const a=mk(W/div,H/div);a.getContext('2d').drawImage(src,0,0,a.width,a.height);
+  const b=mk(a.width/2.5,a.height/2.5);b.getContext('2d').drawImage(a,0,0,b.width,b.height);
+  a.getContext('2d').drawImage(b,0,0,a.width,a.height);
+  const o=mk(W,H);o.getContext('2d').drawImage(a,0,0,W,H);return o;}
+function camCompose(m){
+  const B=m.base,W=B.width,H=B.height,out=document.createElement('canvas');out.width=W;out.height=H;const o=out.getContext('2d');
+  if(!m.mask||m.eff==='none'){o.drawImage(B,0,0);return out;}
+  if(m.eff==='white'){o.fillStyle='#fff';o.fillRect(0,0,W,H);}
+  else{o.drawImage(camSoft(B,W,H,9),0,0);}
+  const sub=document.createElement('canvas');sub.width=W;sub.height=H;const s=sub.getContext('2d');s.drawImage(B,0,0);s.globalCompositeOperation='destination-in';s.drawImage(camMaskCanvas(m,W,H),0,0);
+  o.drawImage(sub,0,0);return out;}
+function camPaint(m){
+  const cv=document.getElementById('cm-cv');if(!cv||!m.base)return;const B=m.base,c=cv.getContext('2d');c.clearRect(0,0,B.width,B.height);
+  if(m.view==='res'){c.drawImage(camCompose(m),0,0);return;}
+  c.drawImage(B,0,0);
+  if(m.mask){const mc=camMaskCanvas(m,B.width,B.height),t=document.createElement('canvas');t.width=B.width;t.height=B.height;const tc=t.getContext('2d');tc.fillStyle='#1fd16a';tc.fillRect(0,0,B.width,B.height);tc.globalCompositeOperation='destination-in';tc.drawImage(mc,0,0);c.globalAlpha=.42;c.drawImage(t,0,0);c.globalAlpha=1;}}
+function camUse(){const m=camMod();if(!m||!m.base)return;
+  if(m.eff!=='none'&&!m.mask){toast('اضغط على المنتج الأول عشان نحدده، أو اختار "من غير تغيير"');return;}
+  const url=camCompose(m).toDataURL('image/jpeg',0.9),f=m.done;camStop(m);ui.modal=null;render();if(f)f(url,m.base.width,m.base.height,m.mask?m.img:'');}
+
 /* PWA install + SEO */
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();V3.inst=e;});
 function seoProduct(p,price){try{document.title=p.name+' | سوق النيل';const set=(sel,attr,val,mk)=>{let el=document.head.querySelector(sel);if(!el){el=document.createElement('meta');mk(el);document.head.appendChild(el);}el.setAttribute(attr,val);};
@@ -2407,4 +2615,4 @@ apply();
 
 </body>
 </html>
-<!-- v31 -->
+<!-- v33 -->
