@@ -2042,6 +2042,7 @@ function lvMk(m,id,html,wx,wy,smooth,anchor){
   if(!e){e=document.createElement('div');e.id=id;e.style.cssText='position:absolute;pointer-events:none;text-align:center;z-index:'+(id==='lv-bk'?4:3);w.appendChild(e);}
   e.style.transition=smooth?'left 1s linear,top 1s linear':'none';
   e.style.left=wx.toFixed(1)+'px';e.style.top=wy.toFixed(1)+'px';e.style.transform=anchor;if(html!==null&&e._h!==html){e.innerHTML=html;e._h=html;}return e;}
+const LVBIKE='<svg viewBox="0 0 34 64" width="34" height="64" xmlns="http://www.w3.org/2000/svg"><rect x="13" y="1" width="8" height="15" rx="3.5" fill="#222" stroke="#fff" stroke-width="1"/><rect x="13" y="47" width="8" height="15" rx="3.5" fill="#222" stroke="#fff" stroke-width="1"/><path d="M4 16 L12 19 L22 19 L30 16" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M4 16 L12 19 L22 19 L30 16" stroke="#333" stroke-width="3" stroke-linecap="round" fill="none"/><rect x="10" y="17" width="14" height="6" rx="3" fill="#555" stroke="#fff" stroke-width="1"/><rect x="9" y="22" width="16" height="20" rx="7" fill="#d62828" stroke="#fff" stroke-width="1.2"/><rect x="11" y="31" width="12" height="9" rx="3" fill="#2b2b2b"/><rect x="8" y="42" width="18" height="15" rx="2.5" fill="#fff" stroke="#d62828" stroke-width="1.6"/><circle cx="17" cy="29" r="5.5" fill="#1a73e8" stroke="#fff" stroke-width="1.4"/></svg>';
 const LVE='font-size:34px;line-height:34px;filter:drop-shadow(0 2px 3px #0008)';
 const LVL='display:inline-block;font:700 11px/14px system-ui,sans-serif;color:#111;background:#fffe;border-radius:6px;padding:0 5px;margin-top:1px';
 function lvDraw(m,instant){
@@ -2055,13 +2056,13 @@ function lvDraw(m,instant){
   wl.style.transition=(m.follow&&smooth)?'transform 1s linear':'none';
   wl.style.transform='translate('+(W/2-m.cx).toFixed(1)+'px,'+(H/2-m.cy).toFixed(1)+'px)';
   /* tiles */
-  const n=Math.pow(2,z);if(m.tz!==z||Object.keys(m.tset||{}).length>160){document.getElementById('lv-tl').innerHTML='';m.tset={};}
-  m.tz=z;const x0=Math.floor((m.cx-W/2-128)/256),x1=Math.floor((m.cx+W/2+128)/256),y0=Math.floor((m.cy-H/2-128)/256),y1=Math.floor((m.cy+H/2+128)/256);
+  const n=Math.pow(2,z);if(m.tz!==z||Object.keys(m.tset||{}).length>260){document.getElementById('lv-tl').innerHTML='';m.tset={};}
+  m.tz=z;const x0=Math.floor((m.cx-W/2-384)/256),x1=Math.floor((m.cx+W/2+384)/256),y0=Math.floor((m.cy-H/2-384)/256),y1=Math.floor((m.cy+H/2+384)/256);
   const tl=document.getElementById('lv-tl');
   for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){if(y<0||y>=n)continue;const k=x+'_'+y;if(m.tset[k])continue;m.tset[k]=1;const xx=((x%n)+n)%n,im=document.createElement('img');im.alt='';im.referrerPolicy='origin';im.draggable=false;im.src='https://tile.openstreetmap.org/'+z+'/'+xx+'/'+y+'.png';im.style.cssText='position:absolute;width:256px;height:256px;left:'+(x*256)+'px;top:'+(y*256)+'px;pointer-events:none';tl.appendChild(im);}
   /* route */
   const rl=document.getElementById('lv-r');
-  if(rl){let pts=rest||(m.rpts?m.rpts:null);if(!pts&&cp){const t=lvTarget(d);if(t)pts=[[cp.lat,cp.lng],[t.lat,t.lng]];}
+  if(rl){let pts=rest||(m.rpts?(cp?[[cp.lat,cp.lng]].concat(m.rpts):m.rpts):null);if(!pts&&cp){const t=lvTarget(d);if(t)pts=[[cp.lat,cp.lng],[t.lat,t.lng]];}
     rl.setAttribute('points',pts?pts.map(a=>{const q=mpx(a[0],a[1],z);return q[0].toFixed(1)+','+q[1].toFixed(1);}).join(' '):'');
     if(m.rpts)rl.removeAttribute('stroke-dasharray');else rl.setAttribute('stroke-dasharray','2 12');}
   /* markers */
@@ -2072,10 +2073,10 @@ function lvDraw(m,instant){
     if(rest&&rest.length>1){let acc=0;tgt=rest[1];for(let i=1;i<rest.length;i++){tgt=rest[i];if(kmJS(rest[0][0],rest[0][1],tgt[0],tgt[1])>0.02)break;}}
     else if(m.prev&&kmJS(m.prev.lat,m.prev.lng,cp.lat,cp.lng)>0.003)tgt=[cp.lat,cp.lng],m._from=[m.prev.lat,m.prev.lng];
     let b=null;if(rest&&tgt)b=lvBearing(rest[0],tgt);else if(tgt&&m._from)b=lvBearing(m._from,tgt);else if(t&&!rest)b=lvBearing([cp.lat,cp.lng],[t.lat,t.lng]);
-    if(b!=null){const east=b<180;m.east=east;let a=east?b-90:b-270;if(m.ra==null)m.ra=a;let df=((a-m.ra+540)%360)-180;m.ra+=df;}
-    const east=m.east===true,ra=(m.ra||0);
-    const tr='rotate('+ra.toFixed(1)+'deg)'+(east?' scaleX(-1)':'');
-    const html='<div id="lv-bi" style="'+LVE+';font-size:42px;line-height:42px;transition:transform .6s linear;transform:'+tr+'">🛵</div><div style="'+LVL+'">المندوب</div>';
+    if(b!=null){if(m.ra==null)m.ra=b;let df=((b-m.ra+540)%360)-180;m.ra+=df;}
+    const ra=(m.ra||0);
+    const tr='rotate('+ra.toFixed(1)+'deg)';
+    const html='<div id="lv-bi" style="width:34px;height:64px;margin:auto;transition:transform .6s linear;transform:'+tr+';filter:drop-shadow(0 2px 3px #0009)">'+LVBIKE+'</div><div style="'+LVL+'">المندوب</div>';
     const e=lvMk(m,'lv-bk',null,q[0],q[1],smooth,'translate(-50%,-50%)');
     if(e){if(!e._i){e.innerHTML=html;e._i=1;}const bi=document.getElementById('lv-bi');if(bi){bi.style.transform=tr;}}
     m.prev=m.prev&&kmJS(m.prev.lat,m.prev.lng,cp.lat,cp.lng)<0.003?m.prev:{lat:cp.lat,lng:cp.lng};}
@@ -2406,4 +2407,4 @@ apply();
 
 </body>
 </html>
-<!-- v29b -->
+<!-- v31 -->
