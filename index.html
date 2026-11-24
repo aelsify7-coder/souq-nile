@@ -566,7 +566,7 @@ const TABS={
   merchant:[['wallet','محفظتي'],['stats','إحصائياتي'],['prods','منتجاتي'],['promo','🏷️ كوبوناتي'],['orders','طلباتي'],['loc','📍 موقعي']],
   reseller:[['cat','المنتجات'],['stats','لوحتي'],['orders','طلباتي'],['wallet','محفظتي']],
   designer:[['new','تصميم جديد'],['mine','تصاميمي'],['orders','طلباتي'],['myprint','مطبعتي'],['wallet','محفظتي']],
-  press:[['orders','طلبات الطباعة'],['notes','الإشعارات'],['prices','أسعاري'],['loc','📍 موقعي'],['wallet','محفظتي']],
+  press:[['orders','طلبات الطباعة'],['notes','الإشعارات'],['rfq','🏭 طلبات جملة'],['prices','أسعاري'],['loc','📍 موقعي'],['wallet','محفظتي']],
   ship:[['notes','الإشعارات'],['pick','للاستلام'],['way','في الطريق'],['price','الأجرة'],['wallet','محفظتي']],
   courier:[['avail','قريب مني'],['mine','أوردراتي'],['wallet','عهدتي وأرباحي']]
 };
@@ -999,6 +999,7 @@ function viewPress(){
   if(t==='wallet')return `<section>${walletCard(owner)}</section>${withdrawSection(owner)}`;
   if(t==='loc')return merchLocHTML();
   if(t==='notes')return `<section>${notesList('press:'+id)}</section>`;
+  if(t==='rfq')return rfqPressHTML();
   if(t==='prices')return `<section><h2>أسعار القطع والطباعة</h2><div class="card">${S.blanks.map(b=>`<div class="row" style="margin:8px 0;align-items:end"><b style="flex:1;min-width:110px">${esc(b.name)}</b><label class="hint" style="width:100px">التيشيرت<input class="bp" type="number" min="0" step="1" value="${b.tee}" data-b="${b.id}" data-k="tee"></label><label class="hint" style="width:100px">الطباعة<input class="bp" type="number" min="0" step="1" value="${b.print}" data-b="${b.id}" data-k="print"></label></div>`).join('')}<div class="row" style="margin:12px 0 4px;align-items:end"><b style="flex:1;min-width:110px">الطباعة على قطع التجار</b><label class="hint" style="width:100px">سعر الطباعة<input id="pfee" type="number" min="0" step="1" value="${(S.presses.find(x=>x.id===id)||{}).printFee||0}"></label><button class="btn sm" data-act="savepfee">حفظ</button></div><div class="hint">قطع المطبعة: فلوسك = التيشيرت + الطباعة. قطع التجار: فلوسك سعر الطباعة بس، والتاجر ياخد سعر قطعته. التغيير بيسري على الطلبات الجديدة بس.</div></div></section>`;
   return `<section>${grid(rev(S.orders.filter(o=>o.pr===id)),o=>orderCard(o,'press'),'لسه مفيش طلبات طباعة.')}</section>`;
 }
@@ -1121,17 +1122,33 @@ function viewCustomer(){
   const items=storeItems();
   return `<div class="hero"><div class="hero-in"><div class="hero-txt"><h2 class="hero-h">أزياء بروح مصرية <span>أصيلة</span></h2><p class="hero-p">من تجّار ومصممين مختارين.</p><button class="btn lg" data-act="shopnow">تسوّق دلوقتي</button> <button class="btn alt lg" data-act="page" data-k="earn">💼 ابدأ تكسب</button></div><div class="hero-logo"><img src="${LOGO}" alt="شعار سوق النيل"></div></div></div>
   <div class="glyphs" aria-hidden="true">𓇳 𓂀 𓆣 𓋹 𓃠 𓅓 𓏏 𓊹</div>
-  ${dealHTML()}${storeHead()}${notesHTML()}${myOrdersHTML()}<section id="shop">${catChips()}<div class="divider" aria-hidden="true"><span class="glyphs" style="letter-spacing:0">𓋹</span></div>
+  ${dealHTML()}${storeHead()}${notesHTML()}${rfqCustHTML()}${myOrdersHTML()}<section id="shop">${catChips()}<div class="divider" aria-hidden="true"><span class="glyphs" style="letter-spacing:0">𓋹</span></div>
   ${items.length?`<div class="grid">${items.map(p=>`<div class="card pcard"><div class="prod lg"><div class="cardart" style="flex:none">${art(p)}</div><div><h3>${esc(p.name)}</h3><div class="meta">${CATS[p.cat]||''}${p.pod?' · تصميم '+esc(desName(p.d)):''}</div><div class="cart">${money(priceOf(p))}</div></div></div><div style="margin-top:8px">${vdetail(p)}</div><div class="row" style="margin-top:10px">${totalStock(p)>0?`<button class="btn" data-act="buy" data-id="${p.id}" data-r="${storeRid()}">اشتري دلوقتي</button><button class="btn alt sm" data-act="wish" data-id="${p.id}" aria-label="المفضلة">${V3.wish.includes(p.id)?'❤️':'🤍'}</button><button class="btn alt sm" data-act="share" data-id="${p.id}" aria-label="شارك المنتج">🔗 شارك</button><button class="btn alt sm" data-act="washare" data-id="${p.id}" aria-label="ابعت على واتساب">💬 واتساب</button>`:`<span class="pill s-cancelled">نفد المخزون</span><button class="btn alt sm" data-act="wish" data-id="${p.id}">${V3.wish.includes(p.id)?'❤️ هننبّهك لما يرجع':'🤍 نبّهني لما يرجع'}</button>`}</div></div>`).join('')}</div>`:'<div class="empty">مفيش منتجات في القسم ده.</div>'}
   <div class="hint" style="margin-top:12px;text-align:center">الدفع عند الاستلام</div>${footerHTML()}${cartFab()}</section>`.replace('PYR',`<svg class="pyr" viewBox="0 0 400 60" preserveAspectRatio="none" aria-hidden="true"><circle cx="200" cy="34" r="16" fill="#f0c75a" opacity=".55"/><path d="M0 60 L70 22 L140 60Z" fill="#c9972b" opacity=".32"/><path d="M110 60 L200 8 L290 60Z" fill="#c9972b" opacity=".5"/><path d="M260 60 L330 26 L400 60Z" fill="#c9972b" opacity=".32"/><path d="M0 52 Q25 44 50 52 T100 52 T150 52 T200 52 T250 52 T300 52 T350 52 T400 52 V60 H0Z" fill="#17878a" opacity=".6"/></svg>`);
 }
 
+/* ===== bulk requests (RFQ) ===== */
+const RFQ={mine:[],open:[]};
+const RFQ_ST={open:'⏳ مستني عروض',quoted:'💬 وصلت عروض',accepted:'✅ اتقبل عرض',closed:'مقفول'};
+async function loadRfq(){if(!CL.profile)return;try{RFQ.mine=(await rpc('rfq_mine',{}))||[];}catch(e){}if(CL.profile.role==='press'){try{RFQ.open=(await rpc('rfq_open',{}))||[];}catch(e){}}}
+function rfqFormHTML(){return `<div class="ov" data-act="closeov"><div class="sheet" role="dialog" aria-label="طلب جملة"><h2 style="margin-top:0">🏭 طلب كمية كبيرة / عرض سعر</h2><p class="hint">للشركات والفرق والفعاليات: اوصف اللي عايزه والمطابع هتبعتلك عروض أسعار ومدة تسليم، وانت تختار الأنسب. بياناتك بتظهر للمطبعة اللي تقبل عرضها بس.</p><label>عنوان الطلب<input id="rf-t" maxlength="120" placeholder="مثلاً: 300 تيشرت لشركتنا بلوجو"></label><label>الكمية (10 فأكتر)<input id="rf-q" type="number" min="10" value="50"></label><label>التفاصيل (الخامة، الألوان، المقاسات، الموعد...)<textarea id="rf-d" rows="4" maxlength="1500"></textarea></label><div class="row" style="margin-top:10px"><button class="btn" data-act="rfqsend">ابعت الطلب</button><button class="btn alt" data-act="closemodal">إغلاق</button></div></div></div>`;}
+function rfqCustHTML(){if(!CL.profile)return '';const L=RFQ.mine||[];
+ return `<section><h2>🏭 طلبات الجملة</h2><div class="card plain"><div class="row sp"><span class="hint">محتاج كمية كبيرة؟ خد عروض أسعار من المطابع.</span><button class="btn sm" data-act="rfqnew">طلب جديد</button></div></div>${L.map(r=>`<div class="card" style="margin:8px 0"><div class="row sp"><b>${esc(r.title)}</b><span class="hint">${RFQ_ST[r.status]||''}</span></div><div class="hint num">${r.qty} قطعة${r.details?' · '+esc(r.details):''}</div>${(r.quotes||[]).map(q=>`<div class="row sp" style="margin-top:6px;padding:6px;border:1px solid #e6e1d4;border-radius:8px${r.acc===q.id?';background:#eef8f1':''}"><div><b>${esc(q.pname)}</b><div class="hint num">${money(q.unit)} للقطعة · الإجمالي ${money(r2(q.unit*r.qty))} · ${q.days} يوم${q.note?' · '+esc(q.note):''}</div></div>${r.status==='accepted'?(r.acc===q.id?'<span class="hint">✓ المختار</span>':''):`<button class="btn good sm" data-act="rfqacc" data-id="${q.id}">اقبل</button>`}</div>`).join('')}${(r.status==='open'||r.status==='quoted')?`<div style="margin-top:6px"><button class="btn alt sm" data-act="rfqclose" data-id="${r.id}">إقفال الطلب</button></div>`:''}</div>`).join('')}</section>`;}
+function rfqPressHTML(){const L=RFQ.open||[];
+ return `<section><h2>🏭 طلبات الجملة</h2>${L.length?L.map(r=>`<div class="card" style="margin:8px 0"><div class="row sp"><b>${esc(r.title)}</b><span class="hint num">${r.qty} قطعة</span></div>${r.details?`<div style="white-space:pre-wrap">${esc(r.details)}</div>`:''}${r.mine?`<div class="hint" style="margin-top:6px">عرضك: ${money(r.mine.unit)} للقطعة · ${r.mine.days} يوم${r.mine.won?' · ✅ اتقبل':''}</div>`:''}${r.contact?`<div class="card plain" style="margin-top:6px">📞 العميل: <b>${esc(r.contact.name||'')}</b> <span dir="ltr">${esc(r.contact.phone||'')}</span></div>`:''}${(r.status==='open'||r.status==='quoted')?`<div class="row" style="margin-top:6px;align-items:end"><label class="hint" style="flex:1">سعر القطعة<input id="rq-u-${r.id}" type="number" min="1" value="${r.mine?r.mine.unit:''}"></label><label class="hint" style="flex:1">أيام التسليم<input id="rq-d-${r.id}" type="number" min="1" value="${r.mine?r.mine.days:''}"></label></div><label class="hint">ملاحظة<input id="rq-n-${r.id}" maxlength="300" value="${r.mine?esc(r.mine.note||''):''}"></label><button class="btn sm" style="margin-top:6px" data-act="rfqquote" data-id="${r.id}">${r.mine?'تحديث العرض':'ابعت عرض'}</button>`:''}</div>`).join(''):'<div class="empty">مفيش طلبات جملة دلوقتي.</div>'}</section>`;}
+function rfqAct(a,d){const g=i=>(document.getElementById(i)||{value:''}).value,done=m=>{if(m)toast(m);return loadRfq().then(render);},bad=er=>toast(errMsg(er));
+ if(a==='rfqnew'){ui.modal={mode:'rfq'};render();return;}
+ if(a==='rfqsend'){rpc('rfq_create',{p_title:g('rf-t'),p_details:g('rf-d'),p_qty:parseInt(g('rf-q'))||0}).then(()=>{ui.modal=null;return done('اتبعت طلبك للمطابع ✓');}).catch(bad);return;}
+ if(a==='rfqacc'){rpc('rfq_accept',{p_quote:+d.id}).then(()=>done('اتقبل العرض، المطبعة هتتواصل معاك ✓')).catch(bad);return;}
+ if(a==='rfqclose'){rpc('rfq_close',{p_id:+d.id}).then(()=>done('اتقفل')).catch(bad);return;}
+ if(a==='rfqquote'){rpc('rfq_quote',{p_id:+d.id,p_unit:parseFloat(g('rq-u-'+d.id))||0,p_days:parseInt(g('rq-d-'+d.id))||0,p_note:g('rq-n-'+d.id)}).then(()=>done('اتبعت العرض ✓')).catch(bad);return;}}
 function modalHTML(){
   const m=ui.modal;if(!m)return '';
   if(m.mode==='page')return pageHTML(m.k);
   if(m.mode==='track')return trackHTML(m);
   if(m.mode==='cart')return cartHTML();
   if(m.mode==='ret')return retHTML(m);
+  if(m.mode==='rfq')return rfqFormHTML();
   if(m.mode==='adkit')return adkitHTML(m);
   if(m.mode==='photo')return photoHTML(m);
   if(m.mode==='live')return liveHTML(m);
@@ -1417,6 +1434,7 @@ function act(a,d,e){
     rpc('request_return',{p_id:d.id,p_reason:r}).then(()=>{ui.modal=null;toast('اتبعت طلب الاسترجاع ✓');render();refreshNow();}).catch(er=>toast(errMsg(er)));return;}
   else if(a==='retok'||a==='retno'){rpc('resolve_return',{p_id:d.id,p_ok:a==='retok'}).then(()=>{toast(a==='retok'?'اتقبل الاسترجاع':'اترفض الطلب');refreshNow();}).catch(er=>toast(errMsg(er)));return;}
   else if(a==='cpapply'){const v=(document.getElementById('c-coupon')||{value:''}).value.trim();ui.cf=ui.cf||{};ui.cf.coupon=v;quoteCart().then(()=>{if(V3.cq&&!V3.cq.ok)toast(V3.cq.msg||'الكود مش صحيح');else if(V3.cq&&V3.cq.code)toast('اتطبّق الكود ✓');});return;}
+  else if(a==='rfqnew'||a==='rfqsend'||a==='rfqacc'||a==='rfqclose'||a==='rfqquote'){rfqAct(a,d);return;}
   else if(a==='mcsave'){const g=i=>(document.getElementById(i)||{value:''}).value;
     rpc('merchant_coupon_save',{p_code:g('mc-code'),p_kind:g('mc-kind'),p_value:parseFloat(g('mc-val'))||0,p_min:parseFloat(g('mc-min'))||0,p_max:parseInt(g('mc-max'))||null,p_days:parseInt(g('mc-days'))||0,p_active:true}).then(()=>{toast('اتحفظ الكوبون ✓');return loadV3();}).then(render).catch(er=>toast(errMsg(er)));return;}
   else if(a==='mctog'){const c=(V3.mcps||[]).find(x=>x.code===d.c);if(!c)return;
@@ -1853,6 +1871,7 @@ function custNotes(){return rev(S.notes.filter(n=>n.to==='cust')).slice(0,5);}
 function notesHTML(){const l=custNotes();return l.length?`<section><h2>🔔 إشعاراتي</h2>${l.map(n=>`<div class="card plain" style="margin:6px 0">${esc(n.text)} <span class="hint num">${fmtDate(n.at)}</span></div>`).join('')}</section>`:'';}
 async function loadV3(){
  if(!CL.profile)return;
+ loadRfq();
  if(CL.profile.role==='merchant'){try{V3.mcps=(await rpc('merchant_coupon_list',{}))||[];}catch(e){}try{V3.views=(await rpc('my_views',{}))||{};}catch(e){}}
  try{V3.wish=(await rpc('wish_list',{}))||[];}catch(e){}
  if(CL.profile.role==='reseller'){try{V3.clicks=(await rpc('my_clicks',{}))||[];}catch(e){}try{V3.slug=(await rpc('my_slug',{}))||'';}catch(e){}}
@@ -2636,3 +2655,4 @@ apply();
 
 </body>
 </html>
+<!-- build rfq -->
