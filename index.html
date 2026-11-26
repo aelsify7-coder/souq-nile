@@ -807,7 +807,7 @@ function viewAdmin(){
       <section><h2>السجل</h2>${grid(done,x=>`<div class="card plain"><div class="row sp"><b>${esc(x.name)}</b><span class="pill s-${x.status}">${WSTATUS[x.status]}</span></div><div class="num">${money(x.amount)}</div></div>`,'لسه مفيش عمليات.')}</section>`;
   }
   if(t==='prods'){
-    return `<section>${grid(S.products,p=>`<div class="card plain prod">${art(p)}<div><h3>${esc(p.name)}</h3><div class="meta">${esc(srcOf(p))} · ${CATS[p.cat]||''}</div><div class="meta num">${p.pod?(p.base?'تيشيرت '+money(podParts(p).t)+' + ':'')+'طباعة '+money(podParts(p).pr)+' + المصمم '+money(p.royalty||0):'سعر التاجر '+money(p.price)}</div><div class="price">الحد الأدنى ${money(floorOf(p))}</div>${vmeta(p)}</div></div>`,'مفيش منتجات.')}</section>`;
+    return `<section>${grid(S.products,p=>`<div class="card plain prod">${art(p)}<div><h3>${esc(p.name)}</h3><div class="meta">${esc(srcOf(p))} · ${CATS[p.cat]||''}</div><div class="meta num">${p.pod?(p.base?'تيشيرت '+money(podParts(p).t)+' + ':'')+'طباعة '+money(podParts(p).pr)+' + المصمم '+money(p.royalty||0):'سعر التاجر '+money(p.price)}</div><div class="price">الحد الأدنى ${money(floorOf(p))}</div>${vmeta(p)}<button class="btn ${isSpon(p.id)?'':'alt'} sm" data-act="spon" data-id="${p.id}">${isSpon(p.id)?'⭐ شيل التمييز':'⭐ ثبّت كمميز'}</button></div></div>`,'مفيش منتجات.')}</section>`;
   }
   return `<section><div class="card"><div class="form">
     <label>النوع<select id="fee-type"><option value="fixed" ${S.settings.type==='fixed'?'selected':''}>مبلغ ثابت لكل قطعة</option><option value="percent" ${S.settings.type==='percent'?'selected':''}>نسبة من سعر التاجر</option></select></label>
@@ -978,7 +978,7 @@ function viewDesigner(){
   if(t==='orders')return `<section>${grid(rev(S.orders.filter(o=>o.did===id)),o=>orderCard(o,'designer'),'لسه مفيش طلبات على تصاميمك.')}</section>`;
   if(t==='mine'){
     const mine=S.products.filter(p=>p.pod&&p.d===id);
-    return `<section>${grid(mine,p=>`<div class="card plain"><div class="prod">${art(p)}<div><h3>${esc(p.name)}</h3><div class="meta">${esc(blankOf(p.bid).name)} · طباعة ${money(p.price)}</div><div class="price">يظهر للعميل ${money(floorOf(p))}</div>${vmeta(p)}</div></div>
+    return `<section><div class="row" style="margin-bottom:8px"><button class="btn alt sm" data-act="desshare">🔗 شارك صفحة تصميماتي (واتساب)</button></div>${grid(mine,p=>`<div class="card plain"><div class="prod">${art(p)}<div><h3>${esc(p.name)}</h3><div class="meta">${esc(blankOf(p.bid).name)} · طباعة ${money(p.price)}</div><div class="price">يظهر للعميل ${money(floorOf(p))}</div>${vmeta(p)}</div></div>
       ${p.own?`<div class="row" style="margin-top:8px"><label class="hint" style="flex:1">تكلفة القطعة عليك<input class="cst" type="number" min="1" step="1" value="${p.price}" data-p="${p.id}"></label></div><div class="vgrid">${p.variants.map((x,i)=>`<span>${sw(x.color)}${esc(cname(x.color))}</span><span>${esc(x.size)}</span><input class="stk ${x.stock<=2?'low':''}" type="number" min="0" step="1" value="${x.stock}" data-p="${p.id}" data-i="${i}" aria-label="مخزون">`).join('')}</div>`:''}
       <div class="row" style="margin-top:8px"><label class="hint" style="flex:1">ربح التصميم للقطعة (${CUR})<input class="roy" type="number" min="1" step="1" value="${p.royalty}" data-p="${p.id}"></label>${ui.confirmDel===p.id?`<button class="btn bad sm" data-act="delyes" data-id="${p.id}">نعم، احذف</button><button class="btn alt sm" data-act="delno">لا</button>`:`<button class="btn bad sm" data-act="delprod" data-id="${p.id}">حذف</button>`}</div></div>`,'لسه ما نشرتش تصميم.')}</section>`;
   }
@@ -1136,13 +1136,13 @@ async function shareLink(url,title){
   try{if(navigator.share){await navigator.share({title:title,text:title,url:url});return;}}catch(e){if(e&&e.name==='AbortError')return;}
   try{await navigator.clipboard.writeText(url);toast('اتنسخ اللينك، ابعته على واتساب');}catch(e){window.prompt('انسخ اللينك:',url);}
 }
-const DQ=new URLSearchParams(location.search),DEEP_T=new URLSearchParams(location.search).get('t'),DEEP_P=DQ.get('p'),DEEP_R=DQ.get('r')||'',DEEP_S=DQ.get('s')||'';
+const DQ=new URLSearchParams(location.search),DEEP_T=new URLSearchParams(location.search).get('t'),DEEP_P=DQ.get('p'),DEEP_R=DQ.get('r')||'',DEEP_S=DQ.get('s')||'',DEEP_D=DQ.get('d')||'';
 function viewCustomer(){
   const items=storeItems();
   return `<div class="hero"><div class="hero-in"><div class="hero-txt"><h2 class="hero-h">أزياء بروح مصرية <span>أصيلة</span></h2><p class="hero-p">من تجّار ومصممين مختارين.</p><button class="btn lg" data-act="shopnow">تسوّق دلوقتي</button> <button class="btn alt lg" data-act="page" data-k="earn">💼 ابدأ تكسب</button></div><div class="hero-logo"><img src="${LOGO}" alt="شعار سوق النيل"></div></div></div>
   <div class="glyphs" aria-hidden="true">𓇳 𓂀 𓆣 𓋹 𓃠 𓅓 𓏏 𓊹</div>
-  ${dealHTML()}${storeHead()}${notesHTML()}${gbCustHTML()}${rfqCustHTML()}${myOrdersHTML()}<section id="shop">${catChips()}<div class="divider" aria-hidden="true"><span class="glyphs" style="letter-spacing:0">𓋹</span></div>
-  ${items.length?`<div class="grid">${items.map(p=>`<div class="card pcard"><div class="prod lg"><div class="cardart" style="flex:none">${art(p)}</div><div><h3>${esc(p.name)}</h3><div class="meta">${CATS[p.cat]||''}${p.pod?' · تصميم '+esc(desName(p.d)):''}</div><div class="cart">${money(priceOf(p))}</div></div></div><div style="margin-top:8px">${vdetail(p)}</div><div class="row" style="margin-top:10px">${totalStock(p)>0?`<button class="btn" data-act="buy" data-id="${p.id}" data-r="${storeRid()}">اشتري دلوقتي</button><button class="btn alt sm" data-act="wish" data-id="${p.id}" aria-label="المفضلة">${V3.wish.includes(p.id)?'❤️':'🤍'}</button><button class="btn alt sm" data-act="share" data-id="${p.id}" aria-label="شارك المنتج">🔗 شارك</button><button class="btn alt sm" data-act="washare" data-id="${p.id}" aria-label="ابعت على واتساب">💬 واتساب</button>`:`<span class="pill s-cancelled">نفد المخزون</span><button class="btn alt sm" data-act="wish" data-id="${p.id}">${V3.wish.includes(p.id)?'❤️ هننبّهك لما يرجع':'🤍 نبّهني لما يرجع'}</button>`}</div></div>`).join('')}</div>`:'<div class="empty">مفيش منتجات في القسم ده.</div>'}
+  ${dealHTML()}${desHead()}${storeHead()}${notesHTML()}${gbCustHTML()}${rfqCustHTML()}${myOrdersHTML()}<section id="shop">${catChips()}<div class="divider" aria-hidden="true"><span class="glyphs" style="letter-spacing:0">𓋹</span></div>
+  ${items.length?`<div class="grid">${items.map(p=>`<div class="card pcard"><div class="prod lg"><div class="cardart" style="flex:none">${art(p)}</div><div><h3>${isSpon(p.id)?'<span style="color:#b8860b;font-size:12px">⭐ مميز</span> ':''}${esc(p.name)}</h3><div class="meta">${CATS[p.cat]||''}${p.pod?' · تصميم '+esc(desName(p.d)):''}</div><div class="cart">${money(priceOf(p))}</div></div></div><div style="margin-top:8px">${vdetail(p)}</div><div class="row" style="margin-top:10px">${totalStock(p)>0?`<button class="btn" data-act="buy" data-id="${p.id}" data-r="${storeRid()}">اشتري دلوقتي</button><button class="btn alt sm" data-act="wish" data-id="${p.id}" aria-label="المفضلة">${V3.wish.includes(p.id)?'❤️':'🤍'}</button><button class="btn alt sm" data-act="share" data-id="${p.id}" aria-label="شارك المنتج">🔗 شارك</button><button class="btn alt sm" data-act="washare" data-id="${p.id}" aria-label="ابعت على واتساب">💬 واتساب</button>`:`<span class="pill s-cancelled">نفد المخزون</span><button class="btn alt sm" data-act="wish" data-id="${p.id}">${V3.wish.includes(p.id)?'❤️ هننبّهك لما يرجع':'🤍 نبّهني لما يرجع'}</button>`}</div></div>`).join('')}</div>`:'<div class="empty">مفيش منتجات في القسم ده.</div>'}
   <div class="hint" style="margin-top:12px;text-align:center">الدفع عند الاستلام</div>${footerHTML()}${cartFab()}</section>`.replace('PYR',`<svg class="pyr" viewBox="0 0 400 60" preserveAspectRatio="none" aria-hidden="true"><circle cx="200" cy="34" r="16" fill="#f0c75a" opacity=".55"/><path d="M0 60 L70 22 L140 60Z" fill="#c9972b" opacity=".32"/><path d="M110 60 L200 8 L290 60Z" fill="#c9972b" opacity=".5"/><path d="M260 60 L330 26 L400 60Z" fill="#c9972b" opacity=".32"/><path d="M0 52 Q25 44 50 52 T100 52 T150 52 T200 52 T250 52 T300 52 T350 52 T400 52 V60 H0Z" fill="#17878a" opacity=".6"/></svg>`);
 }
 
@@ -1358,6 +1358,8 @@ function act(a,d,e){
     sb('/rest/v1/profiles?id=eq.'+d.id,{method:'PATCH',headers:{Prefer:'return=minimal'},body:a==='apprv'?{approved:true}:{role:'customer',approved:true}}).then(()=>{toast(a==='apprv'?'اتفعّل الحساب':'اتحوّل لعميل');CL.known={};refreshNow();}).catch(e=>toast(errMsg(e)));
     return;
   }
+  else if(a==='desshare'){const u=location.origin+location.pathname+'?d='+encodeURIComponent(ui.d);window.open('https://wa.me/?text='+encodeURIComponent('🎨 شوف تصميماتي على سوق النيل\n'+u),'_blank','noopener');return;}
+  else if(a==='spon'){if(!isAdmin())return;const L=((S.settings&&S.settings.spon)||[]).slice(),i=L.indexOf(d.id);if(i>=0)L.splice(i,1);else L.push(d.id);S.settings.spon=L;save();toast(i>=0?'اتشال التمييز':'اتثبّت كمميز');}
   else if(a==='bulktpl'){const csv='\ufeffالاسم,القسم,السعر,اللون,المقاس,الكمية\nعباية كريب,abaya,350,أسود,M,5\nعباية كريب,abaya,350,أسود,L,3\nعباية كريب,abaya,350,#1c1c1c,XL,2\n';const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const l=document.createElement('a');l.href=u;l.download='products-template.csv';l.click();setTimeout(()=>URL.revokeObjectURL(u),2000);return;}
   else if(a==='addprod'){
     const D=ui.draft,price=parseFloat(D.price),name=D.name.trim();
@@ -1887,7 +1889,8 @@ function fMatch(p){const f=V3.f,pr=floorOf(p);
  if(f.color&&!vs.some(v=>v.color===f.color&&v.stock>0))return false;
  if(f.size&&!vs.some(v=>v.size===f.size&&v.stock>0&&(!f.color||v.color===f.color)))return false;
  return true;}
-function sortP(a){const s=V3.f.sort;if(s==='lo')return a.slice().sort((x,y)=>floorOf(x)-floorOf(y));if(s==='hi')return a.slice().sort((x,y)=>floorOf(y)-floorOf(x));if(s==='new')return a.slice().reverse();return a;}
+const isSpon=id=>((S.settings&&S.settings.spon)||[]).includes(id);
+function sortP(a){const s=V3.f.sort;if(!s||s==='def'||s==='')a=a.filter(p=>isSpon(p.id)).concat(a.filter(p=>!isSpon(p.id)));if(s==='lo')return a.slice().sort((x,y)=>floorOf(x)-floorOf(y));if(s==='hi')return a.slice().sort((x,y)=>floorOf(y)-floorOf(x));if(s==='new')return a.slice().reverse();return a;}
 function filtersHTML(){
  const cols=[...new Set(S.products.flatMap(p=>(p.variants||[]).map(v=>v.color)))],szs=[...new Set(S.products.flatMap(p=>(p.variants||[]).map(v=>v.size)))].sort((a,b)=>SIZE_ORDER.indexOf(a)-SIZE_ORDER.indexOf(b));
  const f=V3.f,on=f.sort||f.min!==''||f.max!==''||f.color||f.size||ui.wishOnly;
@@ -1901,7 +1904,8 @@ function filtersHTML(){
 /* store page (?s=slug) */
 const storeRid=()=>(V3.store&&V3.store.rid&&!ui.allShop)?V3.store.rid:'';
 function priceOf(p){const r=storeRid();return r?lineUnit({pid:p.id,rid:r}):floorOf(p);}
-function storeItems(){const r=storeRid();let a=S.products.filter(catMatch);if(r)a=a.filter(p=>S.listings.some(l=>l.r===r&&l.p===p.id));return sortP(a);}
+function storeItems(){const r=storeRid();let a=S.products.filter(catMatch);if(DEEP_D)a=a.filter(p=>p.d===DEEP_D);if(r)a=a.filter(p=>S.listings.some(l=>l.r===r&&l.p===p.id));return sortP(a);}
+function desHead(){if(!DEEP_D)return '';const d=(S.designers||[]).find(x=>x.id===DEEP_D);if(!d)return '<div class="card plain" style="margin:10px 0">صفحة المصمم مش موجودة. تصفّح المنتجات تحت 👇</div>';return `<div class="card" style="margin:10px 0;border:2px solid var(--gold,#c9972b)"><b style="font-size:20px">🎨 تصميمات ${esc(d.name)}</b><div class="hint">كل تصاميم المصمم دي في مكان واحد</div></div>`;}
 function storeHead(){if(!DEEP_S)return '';const s=V3.store;if(!s)return '<div class="card plain" style="margin:10px 0">⏳ بنحمّل المتجر...</div>';
  if(!s.rid)return '<div class="card plain" style="margin:10px 0">المتجر ده مش موجود. تصفّح المنتجات تحت 👇</div>';
  return `<div class="card" style="margin:10px 0;border:2px solid var(--gold,#c9972b)"><div class="row sp"><b style="font-size:20px">🏪 متجر ${esc(s.name)}</b>${ui.allShop?`<button class="btn alt sm" data-act="mystore">متجره</button>`:`<button class="btn alt sm" data-act="allshop">كل المنتجات</button>`}</div><div class="hint">مسوّق معتمد على سوق النيل · الدفع عند الاستلام · توصيل لحد باب البيت</div></div>`;}
