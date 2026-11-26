@@ -827,10 +827,29 @@ function sizeSelect(r,ci,ri){
   const extra=r.size&&!L.includes(r.size)?[r.size]:[];
   return `<select data-ci="${ci}" data-ri="${ri}" data-f="size" aria-label="المقاس"><option value="">اختار المقاس</option>${extra.concat(L).map(x=>`<option value="${x}" ${r.size===x?'selected':''}>${x}</option>`).join('')}</select>`;
 }
+const BULK_COL={'أسود':'#1c1c1c','اسود':'#1c1c1c','أبيض':'#f5f5f5','ابيض':'#f5f5f5','أحمر':'#c0392b','احمر':'#c0392b','أزرق':'#2c5aa0','ازرق':'#2c5aa0','أخضر':'#2d7a4f','اخضر':'#2d7a4f','بيج':'#d8c3a5','رمادي':'#8a8a8a','وردي':'#e8a0b4','كحلي':'#1b2a49','بني':'#6b4423','أصفر':'#e6c229','اصفر':'#e6c229'};
+function bulkImport(txt){
+  const lines=txt.replace(/^\ufeff/,'').split(/\r?\n/).filter(x=>x.trim());if(lines.length<2){toast('الملف فاضي');return;}
+  const sep=lines[0].includes('\t')?'\t':(lines[0].includes(';')&&!lines[0].includes(',')?';':',');
+  const prods={},order=[],errs=[];
+  lines.slice(1).forEach((ln,i)=>{
+    const c=ln.split(sep).map(x=>x.trim().replace(/^"|"$/g,'')),n=i+2;
+    const name=c[0],cat=c[1],price=parseFloat(c[2]),col=BULK_COL[c[3]]||(/^#[0-9a-f]{6}$/i.test(c[3]||'')?c[3].toLowerCase():''),size=c[4],qty=parseInt(c[5]);
+    if(!name||!GROUP_OF[cat]||!(price>0)||!col||!size||!(qty>=0)){errs.push('سطر '+n);return;}
+    const k=name+'|'+cat;
+    if(!prods[k]){prods[k]={name,cat,price,vs:{}};order.push(k);}
+    const key=col+'|'+size;if(prods[k].vs[key]){errs.push('سطر '+n+' مكرر');return;}
+    prods[k].vs[key]={color:col,size,stock:qty};
+  });
+  if(errs.length){toast('في أخطاء: '+errs.slice(0,4).join('، ')+(errs.length>4?' ...':'')+' · ما اتضافش حاجة');return;}
+  if(order.length>100){toast('الحد الأقصى 100 منتج في المرة');return;}
+  order.forEach(k=>{const p=prods[k],vs=Object.values(p.vs);vs.sort((a,b)=>SIZE_ORDER.indexOf(a.size)-SIZE_ORDER.indexOf(b.size));
+    S.products.push({id:'u'+genId(),m:ui.m,name:p.name,cat:p.cat,price:p.price,hue:vs[0].color,img:'',imgs:[],colorImgs:{},variants:vs,printable:false,active:true});});
+  save();toast('اتضاف '+order.length+' منتج');render();}
 function newDraft(){return {name:'',cat:'abaya',price:'',img:'',imgs:[],printable:false,colors:[{hex:'#1c1c1c',img:'',rows:[{size:'',qty:''}]}]};}
 function draftForm(){
   const d=ui.draft;
-  return `<div class="card"><div class="form">
+  return `${ui.editId?'':`<div class="card plain" style="margin-bottom:10px"><b>📥 رفع منتجات كتير مرة واحدة (Excel / CSV)</b><div class="hint">احفظ الشيت كـ CSV. الأعمدة بالترتيب: الاسم، القسم، السعر، اللون، المقاس، الكمية. المنتج الواحد ليه أكتر من صف (لكل لون ومقاس). اللون بالكود مثل #1c1c1c أو بالاسم (أسود، أبيض، أحمر، أزرق، أخضر، بيج، رمادي). الصور تضيفها بعد كده من تعديل المنتج.</div><div class="row" style="margin-top:6px"><input id="bulk-csv" type="file" accept=".csv,.txt,text/csv" aria-label="ملف المنتجات"><button class="btn alt sm" type="button" data-act="bulktpl">⬇️ نموذج جاهز</button></div><div class="hint">الأقسام المسموحة: ${Object.keys(GROUP_OF).join('، ')}</div></div>`}<div class="card"><div class="form">
     <label>اسم المنتج<input id="np-name" data-d="name" value="${esc(d.name)}" placeholder="مثلاً عباية كريب"></label>
     <label>القسم الرئيسي<select id="np-grp">${GROUPS.map(g=>`<option value="${g.k}" ${(GROUP_OF[d.cat]||'women')===g.k?'selected':''}>${g.ic} ${g.t}</option>`).join('')}</select></label>
     <label>القسم الفرعي<select id="np-cat" data-d="cat">${(GROUPS.find(g=>g.k===(GROUP_OF[d.cat]||'women'))||GROUPS[1]).leaf.map(l=>`<option value="${l[0]}" ${d.cat===l[0]?'selected':''}>${l[1]}</option>`).join('')}</select></label>
@@ -1339,6 +1358,7 @@ function act(a,d,e){
     sb('/rest/v1/profiles?id=eq.'+d.id,{method:'PATCH',headers:{Prefer:'return=minimal'},body:a==='apprv'?{approved:true}:{role:'customer',approved:true}}).then(()=>{toast(a==='apprv'?'اتفعّل الحساب':'اتحوّل لعميل');CL.known={};refreshNow();}).catch(e=>toast(errMsg(e)));
     return;
   }
+  else if(a==='bulktpl'){const csv='\ufeffالاسم,القسم,السعر,اللون,المقاس,الكمية\nعباية كريب,abaya,350,أسود,M,5\nعباية كريب,abaya,350,أسود,L,3\nعباية كريب,abaya,350,#1c1c1c,XL,2\n';const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const l=document.createElement('a');l.href=u;l.download='products-template.csv';l.click();setTimeout(()=>URL.revokeObjectURL(u),2000);return;}
   else if(a==='addprod'){
     const D=ui.draft,price=parseFloat(D.price),name=D.name.trim();
     if(!name||!(price>0)){toast('اكتب اسم المنتج وسعره');return;}
@@ -1747,6 +1767,7 @@ function colorPhoto(ci,u,ow,oh){const c=ui.draft.colors[ci];if(!c)return;c.img=u
 function prodPhoto(p,u,ow,oh){if(!p)return;p.img=u;p.imgOrig='';save();render();autoPhoto(u,ow,oh,true,(nu,orig,note)=>{p.img=nu;p.imgOrig=orig;save();render();toast(note);});}
 function loadImage(file){readImage(file,mainPhoto);}
 document.addEventListener('change',e=>{
+  if(e.target.id==='bulk-csv'){const f=e.target.files&&e.target.files[0];if(!f)return;const fr=new FileReader();fr.onload=()=>bulkImport(String(fr.result||''));fr.readAsText(f,'utf-8');e.target.value='';return;}
   if(e.target.id==='rv-file'){const f=e.target.files&&e.target.files[0];if(!f)return;const t=(document.getElementById('rv-txt')||{value:''}).value;const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,480/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.max(2,Math.round(im.width*k));cv.height=Math.max(2,Math.round(im.height*k));cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);let u=cv.toDataURL('image/jpeg',.6);if(u.length>140000)u=cv.toDataURL('image/jpeg',.35);if(u.length>140000){toast('الصورة كبيرة، اختار غيرها');return;}ui.rv.photo=u;render();const x=document.getElementById('rv-txt');if(x)x.value=t;};im.src=fr.result;};fr.readAsDataURL(f);return;}
   if(e.target.id&&e.target.id.startsWith('c-')){ui.cf=ui.cf||{};ui.cf[e.target.id]=e.target.value;return;}
   if(e.target.id==='np-imgs'){const fl=[...(e.target.files||[])].slice(0,3-(ui.draft.imgs||[]).length);ui.draft.imgs=ui.draft.imgs||[];fl.forEach(f=>readImage(f,u=>{if(ui.draft.imgs.length<3){ui.draft.imgs.push(u);render();}}));return;}
