@@ -507,9 +507,10 @@ function orderCard(o,who){
     if(o.status==='shipped')flow.push(['delivered','تأكيد التسليم']);
   }else if(who==='merchant'){
     if(o.status==='new')flow.push(['preparing','ابدأ التجهيز']);
-    if(!o.cid){if(o.status==='preparing')flow.push(['shipped','تم الشحن']);
+    if(!o.cid&&!o.bulk){if(o.status==='preparing')flow.push(['shipped','تم الشحن']);
     if(o.status==='shipped')flow.push(['delivered','تم التسليم للعميل']);}
   }
+  if(!pod&&o.bulk&&who==='ship'){if(o.status==='preparing')flow.push(['shipped','استلمت وشحنت']);if(o.status==='shipped')flow.push(['delivered','تم التسليم للعميل']);}
   const canReturn=who==='admin'&&o.status==='delivered'&&Date.now()<(o.dAt||o.at||0)+holdDays()*86400000;
   const canCancel=who==='admin'&&(o.status==='new'||o.status==='preparing'||(pod&&(o.status==='sent'||o.status==='printing')));
   const showCust=who==='admin'||(who==='merchant'&&!pod)||who==='reseller'||who==='ship';
@@ -523,6 +524,7 @@ function orderCard(o,who){
     ${o.custom&&who!=='reseller'?`<div class="card plain" style="margin:6px 0;border:1px dashed var(--gold)"><b>✨ طلب خاص${o.ext?' · التيشيرت من عند المصمم':''}</b><div style="margin-top:4px;white-space:pre-wrap">${esc(o.brief||'')}</div>${o.ref?`<img class="dimg" style="width:140px;height:140px;margin-top:6px" src="${o.ref}" alt="مرجع">`:''}${o.ext&&o.size?`<div class="hint">المقاس: ${esc(o.size)}</div>`:''}</div>`:''}
     <div class="hint">${o.color?sw(o.color)+esc(cname(o.color))+' · المقاس '+esc(o.size):''}</div>
     <div class="hint num">${fmtDate(o.at)}</div>
+    ${o.bulk&&who!=='reseller'?`<div class="card plain" style="margin:6px 0;border:1px dashed var(--gold)"><b>📦 جملة ${esc(o.bulk)}</b>${o.bnote?`<div style="white-space:pre-wrap">${esc(o.bnote)}</div>`:''}${o.bdesign&&(who==='press'||who==='admin'||who==='merchant')?`<img class="dimg" style="width:140px;height:140px;margin-top:6px" src="${o.bdesign}" alt="ملف الطباعة">`:''}${who==='ship'&&!pod?`<div class="hint">استلم من التاجر: ${esc(merchName(o.mid))}</div>`:''}</div>`:''}
     <div class="hint num">${o.qty} × ${money(o.unit)} = ${money(o.unit*o.qty)}${o.disc>0?' − خصم '+money(o.disc)+' = '+money(o.unit*o.qty-o.disc)+(o.coupon?' ('+esc(o.coupon)+')':''):''}${o.dlv>0?' + توصيل '+money(o.dlv):''} · ${who2} · ${o.rid?'مسوّق: '+esc(resName(o.rid)):'بيع مباشر'}</div>
     ${(who==='ship'||(who==='merchant'&&o.tU&&o.status==='new'))&&pod?`<dl class="kv"><dt>${who==='ship'?'استلام من':'ابعت القطعة لـ'}</dt><dd>${esc(pressOf(o.pr).name)}</dd><dt>العنوان</dt><dd>${esc(pressOf(o.pr).addr)}</dd><dt>الموبايل</dt><dd class="num">${esc(pressOf(o.pr).phone||'—')}</dd>${who==='merchant'?`<dt>المطلوب</dt><dd>${o.qty} × ${esc(cname(o.color))} · مقاس ${esc(o.size)}</dd>`:''}</dl>`:''}
     ${who==='press'&&pod&&o.status==='new'&&o.tU?'<div class="hint">في انتظار التاجر يبعتلك القطعة.</div>':''}
@@ -562,12 +564,12 @@ function withdrawSection(owner){
 }
 
 const TABS={
-  admin:[['over','نظرة عامة'],['orders','الطلبات'],['people','الناس'],['ppl','الأطراف'],['rep','تقارير'],['cour','المناديب'],['wd','السحب'],['prods','المنتجات'],['cont','🏆 مسابقات'],['set','العمولة']],
-  merchant:[['wallet','محفظتي'],['stats','إحصائياتي'],['prods','منتجاتي'],['promo','🏷️ كوبوناتي'],['orders','طلباتي'],['loc','📍 موقعي']],
+  admin:[['over','نظرة عامة'],['orders','الطلبات'],['people','الناس'],['ppl','الأطراف'],['rep','تقارير'],['cour','المناديب'],['wd','السحب'],['prods','المنتجات'],['cont','🏆 مسابقات'],['ws','📦 جملة'],['set','العمولة']],
+  merchant:[['wallet','محفظتي'],['stats','إحصائياتي'],['prods','منتجاتي'],['promo','🏷️ كوبوناتي'],['orders','طلباتي'],['ws','📦 جملة'],['loc','📍 موقعي']],
   reseller:[['cat','المنتجات'],['stats','لوحتي'],['orders','طلباتي'],['wallet','محفظتي']],
   designer:[['new','تصميم جديد'],['mine','تصاميمي'],['orders','طلباتي'],['myprint','مطبعتي'],['wallet','محفظتي']],
-  press:[['orders','طلبات الطباعة'],['notes','الإشعارات'],['rfq','🏭 طلبات جملة'],['prices','أسعاري'],['loc','📍 موقعي'],['wallet','محفظتي']],
-  ship:[['notes','الإشعارات'],['pick','للاستلام'],['way','في الطريق'],['price','الأجرة'],['wallet','محفظتي']],
+  press:[['orders','طلبات الطباعة'],['notes','الإشعارات'],['rfq','🏭 طلبات جملة'],['ws','📦 طباعة جملة'],['prices','أسعاري'],['loc','📍 موقعي'],['wallet','محفظتي']],
+  ship:[['notes','الإشعارات'],['ws','📦 جملة'],['pick','للاستلام'],['way','في الطريق'],['price','الأجرة'],['wallet','محفظتي']],
   courier:[['avail','قريب مني'],['mine','أوردراتي'],['wallet','عهدتي وأرباحي']]
 };
 const INTRO={
@@ -780,6 +782,7 @@ function repHTML(){
 function viewAdmin(){
   const t=ui.tab.admin;
   if(t==='cour')return adminCourierHTML();
+  if(t==='ws')return wsAdminHTML();
   if(t==='over'){
     const delivered=S.orders.filter(o=>o.status==='delivered');
     const gross=delivered.reduce((a,o)=>a+o.unit*o.qty,0);
@@ -892,6 +895,7 @@ function viewMerchant(){
   const id=ui.m,owner='m:'+id,t=ui.tab.merchant;
   if(t==='wallet')return `<section>${walletCard(owner)}</section>${withdrawSection(owner)}`;
   if(t==='stats')return statsHTML(owner,'merchant',id);
+  if(t==='ws')return wsMerchHTML();
   if(t==='loc')return merchLocHTML();
   if(t==='promo')return promoHTML();
   if(t==='prods'){
@@ -1020,16 +1024,19 @@ function viewPress(){
   if(t==='loc')return merchLocHTML();
   if(t==='notes')return `<section>${notesList('press:'+id)}</section>`;
   if(t==='rfq')return rfqPressHTML();
+  if(t==='ws')return wsPressHTML();
   if(t==='prices')return `<section><h2>أسعار القطع والطباعة</h2><div class="card">${S.blanks.map(b=>`<div class="row" style="margin:8px 0;align-items:end"><b style="flex:1;min-width:110px">${esc(b.name)}</b><label class="hint" style="width:100px">التيشيرت<input class="bp" type="number" min="0" step="1" value="${b.tee}" data-b="${b.id}" data-k="tee"></label><label class="hint" style="width:100px">الطباعة<input class="bp" type="number" min="0" step="1" value="${b.print}" data-b="${b.id}" data-k="print"></label></div>`).join('')}<div class="row" style="margin:12px 0 4px;align-items:end"><b style="flex:1;min-width:110px">الطباعة على قطع التجار</b><label class="hint" style="width:100px">سعر الطباعة<input id="pfee" type="number" min="0" step="1" value="${(S.presses.find(x=>x.id===id)||{}).printFee||0}"></label><button class="btn sm" data-act="savepfee">حفظ</button></div><div class="hint">قطع المطبعة: فلوسك = التيشيرت + الطباعة. قطع التجار: فلوسك سعر الطباعة بس، والتاجر ياخد سعر قطعته. التغيير بيسري على الطلبات الجديدة بس.</div></div></section>`;
   return `<section>${grid(rev(S.orders.filter(o=>o.pr===id)),o=>orderCard(o,'press'),'لسه مفيش طلبات طباعة.')}</section>`;
 }
 function viewShip(){
   const t=ui.tab.ship;
   if(t==='notes')return `<section>${notesList('ship')}</section>`;
+  if(t==='ws')return wsShipHTML();
   if(t==='wallet')return `<section>${walletCard('s:'+ui.s)}</section>${withdrawSection('s:'+ui.s)}`;
   if(t==='price')return `<section><h2>أجرة الشحن</h2><div class="card"><div class="row" style="align-items:end"><label style="flex:1">أجرتك للقطعة (${CUR})<input id="ship-fee" type="number" min="0" step="1" value="${S.settings.ship||0}"></label><button class="btn" data-act="saveship">حفظ</button></div><div class="hint" style="margin-top:6px">بتتضاف على سعر أي تيشيرت مطبوع. بتسري على الطلبات الجديدة بس.</div></div></section>`;
+  const shipMine=o=>(o.pod||o.bulk)&&(!o.bulk||!o.sid||o.sid===ui.s);
   const st=t==='pick'?'ready':'shipped';
-  return `<section>${grid(rev(S.orders.filter(o=>o.pod&&o.status===st)),o=>orderCard(o,'ship'),t==='pick'?'مفيش أوردرات جاهزة للاستلام.':'مفيش أوردرات في الطريق.')}</section>`;
+  return `<section>${grid(rev(S.orders.filter(o=>shipMine(o)&&(o.status===st||(t==='pick'&&o.bulk&&!o.pod&&o.status==='preparing')))),o=>orderCard(o,'ship'),t==='pick'?'مفيش أوردرات جاهزة للاستلام.':'مفيش أوردرات في الطريق.')}</section>`;
 }
 
 function bumpListings(){S.listings.forEach(l=>{const p=prodById(l.p);if(p){const f=floorOf(p);if(l.price<f)l.price=f;}});}
@@ -1146,7 +1153,7 @@ function viewCustomer(){
   const items=storeItems();
   return `<div class="hero"><div class="hero-in"><div class="hero-txt"><h2 class="hero-h">أزياء بروح مصرية <span>أصيلة</span></h2><p class="hero-p">من تجّار ومصممين مختارين.</p><button class="btn lg" data-act="shopnow">تسوّق دلوقتي</button> <button class="btn alt lg" data-act="page" data-k="earn">💼 ابدأ تكسب</button></div><div class="hero-logo"><img src="${LOGO}" alt="شعار سوق النيل"></div></div></div>
   <div class="glyphs" aria-hidden="true">𓇳 𓂀 𓆣 𓋹 𓃠 𓅓 𓏏 𓊹</div>
-  ${dealHTML()}${desHead()}${storeHead()}${notesHTML()}${gbCustHTML()}${ctCustHTML()}${rfqCustHTML()}${myOrdersHTML()}<section id="shop">${catChips()}<div class="divider" aria-hidden="true"><span class="glyphs" style="letter-spacing:0">𓋹</span></div>
+  ${dealHTML()}${desHead()}${storeHead()}${notesHTML()}${gbCustHTML()}${ctCustHTML()}${wsCustHTML()}${rfqCustHTML()}${myOrdersHTML()}<section id="shop">${catChips()}<div class="divider" aria-hidden="true"><span class="glyphs" style="letter-spacing:0">𓋹</span></div>
   ${items.length?`<div class="grid">${items.map(p=>`<div class="card pcard"><div class="prod lg"><div class="cardart" style="flex:none">${art(p)}</div><div><h3>${isSpon(p.id)?'<span style="color:#b8860b;font-size:12px">⭐ مميز</span> ':''}${esc(p.name)}</h3><div class="meta">${CATS[p.cat]||''}${p.pod?' · تصميم '+esc(desName(p.d)):''}</div><div class="cart">${money(priceOf(p))}</div></div></div><div style="margin-top:8px">${vdetail(p)}</div><div class="row" style="margin-top:10px">${totalStock(p)>0?`<button class="btn" data-act="buy" data-id="${p.id}" data-r="${storeRid()}">اشتري دلوقتي</button><button class="btn alt sm" data-act="wish" data-id="${p.id}" aria-label="المفضلة">${V3.wish.includes(p.id)?'❤️':'🤍'}</button><button class="btn alt sm" data-act="share" data-id="${p.id}" aria-label="شارك المنتج">🔗 شارك</button><button class="btn alt sm" data-act="washare" data-id="${p.id}" aria-label="ابعت على واتساب">💬 واتساب</button>`:`<span class="pill s-cancelled">نفد المخزون</span><button class="btn alt sm" data-act="wish" data-id="${p.id}">${V3.wish.includes(p.id)?'❤️ هننبّهك لما يرجع':'🤍 نبّهني لما يرجع'}</button>`}</div></div>`).join('')}</div>`:'<div class="empty">مفيش منتجات في القسم ده.</div>'}
   <div class="hint" style="margin-top:12px;text-align:center">الدفع عند الاستلام</div>${footerHTML()}${cartFab()}</section>`.replace('PYR',`<svg class="pyr" viewBox="0 0 400 60" preserveAspectRatio="none" aria-hidden="true"><circle cx="200" cy="34" r="16" fill="#f0c75a" opacity=".55"/><path d="M0 60 L70 22 L140 60Z" fill="#c9972b" opacity=".32"/><path d="M110 60 L200 8 L290 60Z" fill="#c9972b" opacity=".5"/><path d="M260 60 L330 26 L400 60Z" fill="#c9972b" opacity=".32"/><path d="M0 52 Q25 44 50 52 T100 52 T150 52 T200 52 T250 52 T300 52 T350 52 T400 52 V60 H0Z" fill="#17878a" opacity=".6"/></svg>`);
 }
@@ -1166,6 +1173,59 @@ function rfqAct(a,d){const g=i=>(document.getElementById(i)||{value:''}).value,d
  if(a==='rfqacc'){rpc('rfq_accept',{p_quote:+d.id}).then(()=>done('اتقبل العرض، المطبعة هتتواصل معاك ✓')).catch(bad);return;}
  if(a==='rfqclose'){rpc('rfq_close',{p_id:+d.id}).then(()=>done('اتقفل')).catch(bad);return;}
  if(a==='rfqquote'){rpc('rfq_quote',{p_id:+d.id,p_unit:parseFloat(g('rq-u-'+d.id))||0,p_days:parseInt(g('rq-d-'+d.id))||0,p_note:g('rq-n-'+d.id)}).then(()=>done('اتبعت العرض ✓')).catch(bad);return;}}
+/* ===== wholesale (platform-managed bulk orders) ===== */
+const WS={mine:[],feed:[],pct:6};
+const WS_ST={open:'⏳ بنجمع عروض الأسعار',priced:'💰 السعر النهائي جاهز',accepted:'✅ اتأكد',cancelled:'ملغي'};
+const WS_ACTS=['wsnew','wsadd','wsdel','wssend','wsacc','wscancel','wsq','wsqp','wsqs','wspct'];
+let _lw=0;
+async function loadWs(){if(!CL.profile)return;_lw=Date.now();try{WS.mine=(await rpc('bulk_mine',{}))||[];}catch(e){}
+ const r=CL.profile.role;if(r==='merchant'||r==='press'||r==='ship'||r==='admin'){try{WS.feed=(await rpc('bulk_feed',{}))||[];}catch(e){}}
+ try{const p=await rpc('bulk_pct',{});if(p!==null&&p!==undefined)WS.pct=+p;}catch(e){}}
+function wsPoll(){if(!CL.profile||(Date.now()-_lw<20000&&_lw))return;loadWs().then(()=>{const a=document.activeElement;const typing=a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName);if(!ui.modal&&!typing)render();});}
+const wsPN=pid=>{const p=prodById(pid);return p?p.name:pid;};
+function wsSnap(){const w=ui.ws=ui.ws||{lines:[],note:'',name:'',phone:'',gov:'',addr:'',design:''};const g=i=>document.getElementById(i);
+ w.lines.forEach((l,i)=>{const q=g('ws-q-'+i),p=g('ws-p-'+i),s=g('ws-s-'+i);if(q)l.qty=parseInt(q.value)||0;if(p)l.print=p.checked;if(s)l.sizes=s.value;});
+ ['note','name','phone','gov','addr'].forEach(k=>{const e=g('ws-'+k);if(e)w[k]=e.value;});}
+function wsFormHTML(){const w=ui.ws=ui.ws||{lines:[],note:'',name:'',phone:'',gov:'',addr:'',design:''};
+ const cat=S.products.filter(p=>!p.pod&&p.active!==false);const pcs=w.lines.reduce((a,l)=>a+(+l.qty||0),0);const anyPrint=w.lines.some(l=>l.print);
+ return `<div class="ov" data-act="closeov"><div class="sheet" role="dialog" aria-label="طلب جملة"><h2 style="margin-top:0">📦 طلب جملة</h2><p class="hint">اختار المنتجات والكميات (من أكتر من قسم لو عايز). المنصة بتاخد عروض أسعار الجملة من التجار وشركات الشحن (والمطابع لو عايز طباعة)، وبترجعلك سعر نهائي للقطعة. الحد الأدنى 50 قطعة في الطلب.</p>
+ <div class="row" style="align-items:end"><label style="flex:1">أضف منتج<select id="ws-add"><option value="">اختار منتج…</option>${cat.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} — ${money(floorOf(p))}</option>`).join('')}</select></label><button class="btn sm" data-act="wsadd">إضافة</button></div>
+ ${w.lines.map((l,i)=>`<div class="card plain" style="margin:8px 0"><div class="row sp"><b>${esc(wsPN(l.pid))}</b><button class="btn bad sm" data-act="wsdel" data-i="${i}" aria-label="حذف">✕</button></div><div class="row" style="align-items:end"><label class="hint" style="width:110px">الكمية<input id="ws-q-${i}" type="number" min="1" value="${+l.qty||''}"></label><label class="hint" style="flex:1">المقاسات/الألوان<input id="ws-s-${i}" maxlength="200" value="${esc(l.sizes||'')}" placeholder="M 100، L 150…"></label></div><label class="hint" style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" id="ws-p-${i}" style="width:auto" ${l.print?'checked':''}> عايز طباعة/لوجو على القطع دي</label></div>`).join('')||'<div class="empty">لسه مفيش منتجات في الطلب.</div>'}
+ <div class="hint num" style="margin:6px 0">إجمالي القطع: <b>${pcs}</b>${pcs<50?' (لازم 50 على الأقل)':''}</div>
+ ${anyPrint?`<label>ملف الطباعة/اللوجو (اختياري، صورة)<input id="ws-file" type="file" accept="image/*"></label>${w.design?'<div class="hint">✓ اتحمّل الملف</div>':''}`:''}
+ <label>ملاحظات<textarea id="ws-note" rows="2" maxlength="600">${esc(w.note||'')}</textarea></label>
+ <div class="form"><label>الاسم<input id="ws-name" value="${esc(w.name||'')}"></label><label>الموبايل<input id="ws-phone" inputmode="tel" value="${esc(w.phone||'')}"></label><label>المحافظة<select id="ws-gov"><option value="">اختار المحافظة</option>${GOVS.map(g=>`<option ${w.gov===g?'selected':''}>${g}</option>`).join('')}</select></label><label>العنوان<input id="ws-addr" value="${esc(w.addr||'')}"></label></div>
+ <div class="row" style="margin-top:10px"><button class="btn" data-act="wssend">ابعت الطلب</button><button class="btn alt" data-act="closemodal">إغلاق</button></div></div></div>`;}
+function wsCustHTML(){if(!CL.profile)return '';const L=WS.mine||[];
+ return `<section><h2>📦 طلبات الجملة</h2><div class="card plain"><div class="row sp"><span class="hint">محتاج كمية كبيرة من منتجات مختلفة؟ خد سعر جملة نهائي للقطعة.</span><button class="btn sm" data-act="wsnew">طلب جملة</button></div></div>${L.map(r=>{const pr=r.status==='priced'||r.status==='accepted';
+  return `<div class="card" style="margin:8px 0"><div class="row sp"><b>طلب ${esc(r.id)}</b><span class="hint">${WS_ST[r.status]||''}</span></div>
+  ${(r.lines||[]).map(l=>`<div class="row sp" style="padding:4px 0;border-bottom:1px solid #eee"><span>${esc(wsPN(l.pid))} × <b class="num">${l.qty}</b>${l.print?' 🖨️':''}</span>${pr&&l.unit!=null?`<span class="num">${l.retail&&l.unit<l.retail?`<s class="hint">${money(l.retail)}</s> `:''}<b>${money(l.unit)}</b> للقطعة${l.retail&&l.unit<l.retail?` <span class="hint">(وفّرت ${Math.round((1-l.unit/l.retail)*100)}%)</span>`:''}</span>`:`<span class="hint">${l.quoted?'✓ التاجر ردّ':'مستني التاجر'}</span>`}</div>`).join('')}
+  ${r.status==='priced'||r.status==='accepted'?`<div class="card plain" style="margin-top:6px"><div class="row sp"><span>الإجمالي (${r.pieces} قطعة)</span><b class="num">${money(r.total)}</b></div><div class="hint num">متوسط ${money(r.avg)} للقطعة${r.pressDays?' · الطباعة '+r.pressDays+' يوم':''}${r.shipDays?' · الشحن '+r.shipDays+' يوم':''} · الدفع عند الاستلام</div></div>`:''}
+  ${r.status==='priced'?`<div class="row" style="margin-top:8px"><button class="btn good sm" data-act="wsacc" data-id="${esc(r.id)}">اقبل السعر وأكّد الطلب</button><button class="btn alt sm" data-act="wscancel" data-id="${esc(r.id)}">إلغاء</button></div>`:''}
+  ${r.status==='open'?`<div class="hint" style="margin-top:6px">${r.needPress?'المطبعة: '+(r.gotPress?'✓ ':'⏳ ')+' · ':''}الشحن: ${r.gotShip?'✓':'⏳'}</div><div style="margin-top:6px"><button class="btn alt sm" data-act="wscancel" data-id="${esc(r.id)}">إلغاء الطلب</button></div>`:''}
+  </div>`;}).join('')}</section>`;}
+function wsMerchHTML(){const L=WS.feed||[];
+ return `<section><h2>📦 طلبات الجملة</h2><p class="hint">عميل عايز كمية كبيرة من منتجاتك. اكتب سعر الجملة للقطعة (لازم يكون أقل من أو يساوي سعرك العادي). اللي بتكتبه هو اللي هتستلمه بالكامل، والمنصة بتضيف نسبتها (${WS.pct}%) فوقه والعميل بيشوف السعر النهائي بس. تقدر تعدّل سعرك لحد ما العميل يقبل.</p>${L.length?L.map(r=>`<div class="card" style="margin:8px 0"><div class="row sp"><b>${esc(r.id)}</b><span class="hint">${esc(r.gov||'')}</span></div>${r.note?`<div class="hint" style="white-space:pre-wrap">${esc(r.note)}</div>`:''}${(r.lines||[]).map(l=>`<div style="margin-top:8px;padding-top:6px;border-top:1px solid #eee"><div class="row sp"><span>${esc(wsPN(l.pid))} × <b class="num">${l.qty}</b>${l.print?' 🖨️ طباعة':''}</span><span class="hint num">سعرك العادي ${money(l.price)}</span></div>${l.sizes?`<div class="hint">${esc(l.sizes)}</div>`:''}<div class="row" style="align-items:end;margin-top:4px"><label class="hint" style="flex:1">سعر الجملة للقطعة<input id="wq-${esc(r.id)}-${l.n}" type="number" min="1" step="0.5" value="${l.mine!=null?l.mine:''}"></label><button class="btn sm" data-act="wsq" data-id="${esc(r.id)}" data-n="${l.n}">${l.mine!=null?'تحديث':'ابعت'}</button></div></div>`).join('')}</div>`).join(''):'<div class="empty">مفيش طلبات جملة على منتجاتك دلوقتي.</div>'}</section>`;}
+function wsPressHTML(){const L=WS.feed||[];
+ return `<section><h2>📦 طباعة جملة</h2><p class="hint">اكتب سعر الطباعة للقطعة ومدة التنفيذ. أقل عرض (مع أحسن شروط) هو اللي بيتختار. المنصة بتضيف نسبتها (${WS.pct}%) فوق سعرك.</p>${L.length?L.map(r=>`<div class="card" style="margin:8px 0"><div class="row sp"><b>${esc(r.id)}</b><span class="hint num">${r.pieces} قطعة · ${esc(r.gov||'')}</span></div>${(r.items||[]).map(i=>`<div class="hint">${esc(wsPN(i.pid))} × ${i.qty}${i.sizes?' · '+esc(i.sizes):''}</div>`).join('')}${r.note?`<div class="hint" style="white-space:pre-wrap">${esc(r.note)}</div>`:''}${r.hasDesign&&r.design?`<img class="dimg" src="${r.design}" alt="التصميم" style="margin-top:6px">`:''}<div class="row" style="align-items:end;margin-top:6px"><label class="hint" style="flex:1">سعر الطباعة للقطعة<input id="wp-u-${esc(r.id)}" type="number" min="1" step="0.5" value="${r.mine?r.mine.unit:''}"></label><label class="hint" style="flex:1">أيام التنفيذ<input id="wp-d-${esc(r.id)}" type="number" min="1" max="90" value="${r.mine?r.mine.days:''}"></label></div><button class="btn sm" style="margin-top:6px" data-act="wsqp" data-id="${esc(r.id)}">${r.mine?'تحديث العرض':'ابعت عرض'}</button></div>`).join(''):'<div class="empty">مفيش طلبات طباعة جملة دلوقتي.</div>'}</section>`;}
+function wsShipHTML(){const L=WS.feed||[];
+ return `<section><h2>📦 شحن جملة</h2><p class="hint">اكتب إجمالي الشحن للطلب كله (مش للقطعة) ومدة التوصيل. أقل عرض هو اللي بيتختار. المنصة بتضيف نسبتها (${WS.pct}%) فوق السعر.</p>${L.length?L.map(r=>`<div class="card" style="margin:8px 0"><div class="row sp"><b>${esc(r.id)}</b><span class="hint num">${r.pieces} قطعة · ${r.lines} صنف · ${esc(r.gov||'')}</span></div><div class="row" style="align-items:end;margin-top:6px"><label class="hint" style="flex:1">إجمالي الشحن<input id="wsh-t-${esc(r.id)}" type="number" min="1" step="1" value="${r.mine?r.mine.unit:''}"></label><label class="hint" style="flex:1">أيام التوصيل<input id="wsh-d-${esc(r.id)}" type="number" min="1" max="60" value="${r.mine?r.mine.days:''}"></label></div><button class="btn sm" style="margin-top:6px" data-act="wsqs" data-id="${esc(r.id)}">${r.mine?'تحديث العرض':'ابعت عرض'}</button></div>`).join(''):'<div class="empty">مفيش طلبات شحن جملة دلوقتي.</div>'}</section>`;}
+function wsAdminHTML(){const L=WS.feed||[];
+ return `<section><h2>📦 الجملة</h2><div class="card plain"><div class="row" style="align-items:end"><label style="flex:1">نسبة المنصة على الجملة (%)<input id="ws-pct" type="number" min="0" max="40" step="0.5" value="${WS.pct}"></label><button class="btn sm" data-act="wspct">حفظ</button></div><div class="hint">بتتحسب على (سعر التاجر + الطباعة) لكل قطعة، وبتتضاف فوق عروضهم. العميل بيشوف السعر النهائي بس.</div></div>${L.length?L.map(r=>{const p=r.priced;return `<div class="card" style="margin:8px 0"><div class="row sp"><b>${esc(r.id)} · ${esc(r.gov||'')}</b><span class="hint">${WS_ST[r.status]||r.status}</span></div><div class="hint num">${r.pieces} قطعة · ${r.quotes} عرض</div>${p?`${(p.lines||[]).map(l=>`<div class="hint num">${esc(wsPN(l.pid))} × ${l.qty}: تاجر ${money(l.m)}${l.print?' + طباعة '+money(l.pr):''} + منصة ${money(l.fee)} + شحن ${money(l.s)} = <b>${money(l.unit)}</b></div>`).join('')}<div class="hint num"><b>إجمالي ${money(p.total)}</b> · عمولة المنصة ${money(r2((p.lines||[]).reduce((a,l)=>a+l.fee*l.qty,0)))}</div>`:''}</div>`;}).join(''):'<div class="empty">مفيش طلبات جملة.</div>'}</section>`;}
+function wsAct(a,d){const g=i=>(document.getElementById(i)||{value:''}).value,done=m=>{if(m)toast(m);return loadWs().then(render);},bad=er=>toast(errMsg(er));
+ if(a==='wsnew'){ui.ws={lines:[],note:'',name:'',phone:'',gov:'',addr:'',design:''};ui.modal={mode:'ws'};render();return;}
+ if(a==='wsadd'){wsSnap();const pid=g('ws-add');if(!pid){toast('اختار منتج الأول');return;}if(ui.ws.lines.some(l=>l.pid===pid)){toast('المنتج ده مضاف');return;}if(ui.ws.lines.length>=20){toast('أقصى حاجة 20 صنف');return;}ui.ws.lines.push({pid,qty:50,print:false,sizes:''});render();return;}
+ if(a==='wsdel'){wsSnap();ui.ws.lines.splice(+d.i,1);render();return;}
+ if(a==='wssend'){wsSnap();const w=ui.ws;if(!w.lines.length){toast('ضيف منتج واحد على الأقل');return;}const pcs=w.lines.reduce((x,l)=>x+(+l.qty||0),0);if(w.lines.some(l=>!(l.qty>0))){toast('اكتب الكمية لكل صنف');return;}if(pcs<50){toast('الحد الأدنى 50 قطعة');return;}
+  if(!w.name.trim()||!/^[0-9+ ]{8,15}$/.test(w.phone.trim())||!w.gov||w.addr.trim().length<4){toast('كمّل بياناتك (الاسم، الموبايل، المحافظة، العنوان)');return;}
+  const anyPrint=w.lines.some(l=>l.print);
+  rpc('bulk_create',{p_lines:w.lines.map(l=>({pid:l.pid,qty:+l.qty,print:!!l.print,sizes:l.sizes||''})),p_note:w.note||'',p_cust:{name:w.name.trim(),phone:w.phone.trim(),gov:w.gov,addr:w.addr.trim()},p_design:anyPrint&&w.design?w.design:null}).then(()=>{ui.modal=null;ui.ws=null;return done('اتبعت طلبك ✓ هنرجعلك بالسعر النهائي');}).catch(bad);return;}
+ if(a==='wsacc'){rpc('bulk_accept',{p_id:d.id}).then(()=>{toast('اتأكد الطلب ✓ هيتجهز ويتشحن');refreshNow();return loadWs().then(render);}).catch(bad);return;}
+ if(a==='wscancel'){rpc('bulk_cancel',{p_id:d.id}).then(()=>done('اتلغى')).catch(bad);return;}
+ if(a==='wsq'){rpc('bulk_quote_m',{p_id:d.id,p_line:+d.n,p_unit:parseFloat(g('wq-'+d.id+'-'+d.n))||0}).then(()=>done('اتبعت سعرك ✓')).catch(bad);return;}
+ if(a==='wsqp'){rpc('bulk_quote_p',{p_id:d.id,p_unit:parseFloat(g('wp-u-'+d.id))||0,p_days:parseInt(g('wp-d-'+d.id))||0}).then(()=>done('اتبعت العرض ✓')).catch(bad);return;}
+ if(a==='wsqs'){rpc('bulk_quote_s',{p_id:d.id,p_total:parseFloat(g('wsh-t-'+d.id))||0,p_days:parseInt(g('wsh-d-'+d.id))||0}).then(()=>done('اتبعت العرض ✓')).catch(bad);return;}
+ if(a==='wspct'){rpc('bulk_set_pct',{p_pct:parseFloat(g('ws-pct'))}).then(()=>done('اتحفظت النسبة ✓')).catch(bad);return;}}
 /* ===== group buying ===== */
 const GB={list:[],mine:[]};
 /* ===== DESIGNER CONTESTS ===== */
@@ -1208,6 +1268,7 @@ function modalHTML(){
   if(m.mode==='ret')return retHTML(m);
   if(m.mode==='review'){const r=ui.rv||{n:5};return `<div class="ov" data-act="closeov"><div class="sheet" style="max-width:420px"><h2 style="margin-top:0">قيّم المنتج</h2><div style="font-size:30px;text-align:center;direction:ltr">${[1,2,3,4,5].map(i=>`<span data-act="rvstar" data-n="${i}" style="cursor:pointer;color:${i<=r.n?'#f5a623':'#ccc'}">★</span>`).join('')}</div><label>رأيك (اختياري)<textarea id="rv-txt" rows="3" maxlength="500"></textarea></label>${r.photo?`<img src="${r.photo}" style="max-width:100%;max-height:160px;border-radius:8px;margin:6px 0">`:''}<input type="file" id="rv-file" accept="image/*" style="display:none"><div class="row"><button class="btn alt sm" data-act="rvpick">📷 ${r.photo?'غيّر الصورة':'أضف صورة'}</button><button class="btn" data-act="rvsend">إرسال التقييم</button><button class="btn alt" data-act="closemodal">إلغاء</button></div></div></div>`;}
   if(m.mode==='rfq')return rfqFormHTML();
+  if(m.mode==='ws')return wsFormHTML();
   if(m.mode==='gb')return gbJoinHTML(m);
   if(m.mode==='adkit')return adkitHTML(m);
   if(m.mode==='photo')return photoHTML(m);
@@ -1504,6 +1565,7 @@ function act(a,d,e){
   else if(a==='retok'||a==='retno'){rpc('resolve_return',{p_id:d.id,p_ok:a==='retok'}).then(()=>{toast(a==='retok'?'اتقبل الاسترجاع':'اترفض الطلب');refreshNow();}).catch(er=>toast(errMsg(er)));return;}
   else if(a==='cpapply'){const v=(document.getElementById('c-coupon')||{value:''}).value.trim();ui.cf=ui.cf||{};ui.cf.coupon=v;quoteCart().then(()=>{if(V3.cq&&!V3.cq.ok)toast(V3.cq.msg||'الكود مش صحيح');else if(V3.cq&&V3.cq.code)toast('اتطبّق الكود ✓');});return;}
   else if(a==='gbjoin'||a==='gbsend'||a==='gbcreate'){gbAct(a,d);return;}
+  else if(WS_ACTS.includes(a)){wsAct(a,d);return;}
   else if(a==='rfqnew'||a==='rfqsend'||a==='rfqacc'||a==='rfqclose'||a==='rfqquote'){rfqAct(a,d);return;}
   else if(a==='mcsave'){const g=i=>(document.getElementById(i)||{value:''}).value;
     rpc('merchant_coupon_save',{p_code:g('mc-code'),p_kind:g('mc-kind'),p_value:parseFloat(g('mc-val'))||0,p_min:parseFloat(g('mc-min'))||0,p_max:parseInt(g('mc-max'))||null,p_days:parseInt(g('mc-days'))||0,p_active:true}).then(()=>{toast('اتحفظ الكوبون ✓');return loadV3();}).then(render).catch(er=>toast(errMsg(er)));return;}
@@ -1793,6 +1855,7 @@ function colorPhoto(ci,u,ow,oh){const c=ui.draft.colors[ci];if(!c)return;c.img=u
 function prodPhoto(p,u,ow,oh){if(!p)return;p.img=u;p.imgOrig='';save();render();autoPhoto(u,ow,oh,true,(nu,orig,note)=>{p.img=nu;p.imgOrig=orig;save();render();toast(note);});}
 function loadImage(file){readImage(file,mainPhoto);}
 document.addEventListener('change',e=>{
+  if(e.target.id==='ws-file'){const f=e.target.files&&e.target.files[0];if(!f)return;wsSnap();const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{let k=Math.min(1,700/Math.max(im.width,im.height)),u='';for(let t=0;t<4;t++){const cv=document.createElement('canvas');cv.width=Math.max(2,Math.round(im.width*k));cv.height=Math.max(2,Math.round(im.height*k));cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);u=cv.toDataURL('image/jpeg',.7);if(u.length<=140000)break;k*=.7;}if(u.length>145000){toast('الصورة كبيرة، اختار غيرها');return;}ui.ws.design=u;render();};im.onerror=()=>toast('مقدرتش أقرا الصورة');im.src=fr.result;};fr.readAsDataURL(f);return;}
   if(e.target.id==='bulk-csv'){const f=e.target.files&&e.target.files[0];if(!f)return;const fr=new FileReader();fr.onload=()=>bulkImport(String(fr.result||''));fr.readAsText(f,'utf-8');e.target.value='';return;}
   if(e.target.id==='rv-file'){const f=e.target.files&&e.target.files[0];if(!f)return;const t=(document.getElementById('rv-txt')||{value:''}).value;const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,480/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=Math.max(2,Math.round(im.width*k));cv.height=Math.max(2,Math.round(im.height*k));cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);let u=cv.toDataURL('image/jpeg',.6);if(u.length>140000)u=cv.toDataURL('image/jpeg',.35);if(u.length>140000){toast('الصورة كبيرة، اختار غيرها');return;}ui.rv.photo=u;render();const x=document.getElementById('rv-txt');if(x)x.value=t;};im.src=fr.result;};fr.readAsDataURL(f);return;}
   if(e.target.id&&e.target.id.startsWith('c-')){ui.cf=ui.cf||{};ui.cf[e.target.id]=e.target.value;return;}
@@ -1947,7 +2010,7 @@ function ptsHTML(){const b=V3.pts&&+V3.pts.bal>0?Math.floor(+V3.pts.bal):0;if(b<
 function ptsUse(){const c=document.getElementById('o-pts');return c&&c.checked&&V3.pts?Math.max(0,Math.floor(+V3.pts.bal)):0;}
 async function loadV3(){
  if(!CL.profile)return;
- loadRfq();loadGb();loadCt();
+ loadRfq();loadGb();loadCt();loadWs().then(()=>{const a=document.activeElement;if(!ui.modal&&!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)))render();});
  if(CL.profile.role==='merchant'){try{V3.mcps=(await rpc('merchant_coupon_list',{}))||[];}catch(e){}try{V3.views=(await rpc('my_views',{}))||{};}catch(e){}}
  try{V3.wish=(await rpc('wish_list',{}))||[];}catch(e){}
  try{V3.pts=(await rpc('my_points',{}))||{};}catch(e){}
@@ -2459,7 +2522,7 @@ function vbadge(m){return (RT.ver.includes(m)?' <span title="تاجر موثّق
 function tierOf(n){return n>=100?['💎 ماسي',100]:n>=30?['🥇 ذهبي',30]:n>=10?['🥈 فضي',10]:n>=1?['🥉 برونزي',1]:['🌱 مبتدئ',0];}
 function lbHTML(){return RT.lb.length?`<div class="card plain" style="margin:10px 0"><b>🏆 أفضل المسوّقين</b>${RT.lb.map((x,i)=>`<div class="row sp" style="padding:3px 0"><span>${i+1}. ${esc(x.name)} ${tierOf(x.n)[0]}</span><b class="num">${x.n} طلب</b></div>`).join('')}</div>`:'';}
 async function refreshNow(){
-  if(CL.dirty||CL.pushing)return;loadExtras();
+  if(CL.dirty||CL.pushing)return;loadExtras();wsPoll();
   try{const ch=await pull();if(ch||!CL.ready){buildS();CL.ready=true;ensureParty();const a=document.activeElement;const typing=a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName);if(!ui.modal&&!typing)render();else if(!CL.firstRender){}}}catch(e){if(e.status===401){setSess(null);CL.profile=null;applyIdentity();render();}}
 }
 function save(){CL.dirty=true;clearTimeout(CL.timer);CL.timer=setTimeout(pushDiff,250);}
