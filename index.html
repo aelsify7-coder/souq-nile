@@ -2046,6 +2046,8 @@ function coCard(x){
   <div class="hint">${esc(x.gov||'')}${x.mAddr?' · التاجر: '+esc(x.mAddr):''}</div>
   <div class="tiles" style="margin:8px 0"><div class="tile"><b>${kmT(x.kmTo)}</b><span>تبعد عنك</span></div><div class="tile"><b>${kmT(x.kmTrip)}</b><span>من التاجر للعميل</span></div><div class="tile"><b>${money(x.pay)}</b><span>أجرتك${trip?'':' (أساسية)'}</span></div><div class="tile"><b>${money(x.cod)}</b><span>تحصّله كاش</span></div></div>
   <div class="row"><button class="btn" data-act="coclaim" data-id="${esc(x.id)}">استلم الأوردر ده</button></div></div>`;}
+function waTo(p,t){const ph=String(p||'').replace(/\D/g,'').replace(/^00/,'').replace(/^0/,'20');return ph?'https://wa.me/'+ph+'?text='+encodeURIComponent(t):'';}
+function waBtn(p,t,l){const u=waTo(p,t);return u?`<a class="btn alt sm" style="text-decoration:none;background:#25D366;color:#fff" target="_blank" rel="noopener" href="${esc(u)}">💬 ${l||'واتساب'}</a>`:'';}
 const coSt={preparing:['🏪 روح استلمه من التاجر','#8a6d1a'],ready:['🏭 روح استلمه من المطبعة','#8a6d1a'],shipped:['🚚 في الطريق للعميل','#2f6f8f'],delivered:['✓ اتسلّم','#2d7a4f']};
 function coMine(x){
   const c=x.cust||{},st=coSt[x.status]||['',''];
@@ -2054,8 +2056,8 @@ function coMine(x){
   return `<div class="card plain" style="margin:8px 0"><div class="row sp"><b>${esc(x.pname||'')} × ${x.qty}${x.size?' · '+esc(x.size):''}</b><span class="pill s-new">${esc(x.id)}</span></div>
   <div style="color:${st[1]};font-weight:700;margin:4px 0">${st[0]}</div>
   <div class="hint">أجرتك ${money(x.cpay||0)} · تحصّل كاش ${money(x.cod)}</div>
-  ${x.status==='delivered'?'':`<dl class="kv"><dt>التاجر</dt><dd>${esc(x.mName||'—')} ${tel(x.mPhone)}</dd><dt>عنوانه</dt><dd>${esc(x.mAddr||'—')} <a class="btn alt sm" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(mapLink(x.mLat,x.mLng,x.mAddr))}">🗺️ الخريطة</a></dd>
-  <dt>العميل</dt><dd>${esc(c.name||'')} ${tel(c.phone)}</dd><dt>العنوان</dt><dd>${esc(c.gov||'')} · ${esc(c.addr||'')} <a class="btn alt sm" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(mapLink(c.lat,c.lng,(c.gov||'')+' '+(c.addr||'')))}">🗺️ الخريطة</a></dd><dt>الوقت المتاح</dt><dd>${esc(c.time||'')}</dd></dl>`}
+  ${x.status==='delivered'?'':`<dl class="kv"><dt>التاجر</dt><dd>${esc(x.mName||'—')} ${tel(x.mPhone)} ${waBtn(x.mPhone,'أهلاً، أنا مندوب سوق النيل. جاي أستلم أوردر '+x.id+' ('+(x.pname||'')+'). تمام؟')}</dd><dt>عنوانه</dt><dd>${esc(x.mAddr||'—')} <a class="btn alt sm" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(mapLink(x.mLat,x.mLng,x.mAddr))}">🗺️ الخريطة</a></dd>
+  <dt>العميل</dt><dd>${esc(c.name||'')} ${tel(c.phone)} ${waBtn(c.phone,'أهلاً '+(c.name||'')+'، أنا مندوب سوق النيل وهوصلك أوردر '+x.id+' ('+(x.pname||'')+'). المبلغ المطلوب '+money(x.cod)+'. أنا في الطريق، ممكن موقعك أو أقرب علامة؟')}</dd><dt>العنوان</dt><dd>${esc(c.gov||'')} · ${esc(c.addr||'')} <a class="btn alt sm" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(mapLink(c.lat,c.lng,(c.gov||'')+' '+(c.addr||'')))}">🗺️ الخريطة</a></dd><dt>الوقت المتاح</dt><dd>${esc(c.time||'')}</dd></dl>`}
   <div class="row" style="margin-top:8px">${(x.status==='preparing'||x.status==='ready')?`<button class="btn" data-act="copick" data-id="${esc(x.id)}">📸 استلمت من التاجر</button><button class="btn alt sm" data-act="counclaim" data-id="${esc(x.id)}">إلغاء</button>`:''}${x.status==='shipped'?`<button class="btn good" data-act="codeliver" data-id="${esc(x.id)}">📸 سلّمت للعميل</button>`:''}${x.status!=='delivered'?`<button class="btn alt sm" data-act="livemap" data-id="${esc(x.id)}">🧭 خريطة الطريق</button>`:''}${ph(x.pickPhoto,'صورة الاستلام')}${ph(x.delPhoto,'صورة التسليم')}</div></div>`;}
 
 function viewCourier(){
