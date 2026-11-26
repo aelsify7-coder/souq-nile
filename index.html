@@ -1444,6 +1444,7 @@ function act(a,d,e){
   else if(a==='trackgo'){const id=document.querySelector('#t-id').value.trim(),ph=document.querySelector('#t-phone').value.trim();const m=ui.modal;m.id=id;m.ph=ph;
     if(!id||!ph){m.err='اكتب رقم الطلب والموبايل';render();return;}
     rpc('track_order',{p_id:id,p_phone:ph}).then(r=>{m.res=r;m.err=r?'':'مفيش طلب بالبيانات دي — اتأكد من الرقم والموبايل';render();}).catch(()=>{m.err='حصلت مشكلة، جرّب تاني';render();});return;}
+  else if(a==='coonline'){const nv=CO.online===false;rpc('courier_set_online',{p_on:nv}).then(()=>{CO.online=nv;return coAvail();}).then(()=>{toast(nv?'إنت متاح دلوقتي':'وقفت استلام الأوردرات');render();}).catch(e=>toast(errMsg(e)));return;}
   else if(a==='wa'){const o=S.orders.find(x=>x.id===d.id);if(o)window.open(waLink(o),'_blank');return;}
   else if(a==='wish'){if(!CL.profile){authRole='';showAuth('signup');toast('سجّل دخولك الأول عشان تحفظ المفضلة');return;}
     rpc('wish_toggle',{p_pid:d.id}).then(on=>{V3.wish=on?V3.wish.concat([d.id]):V3.wish.filter(x=>x!==d.id);toast(on?'اتضاف للمفضلة. هننبّهك لو رجع بعد ما يخلص':'اتشال من المفضلة');render();}).catch(er=>toast(errMsg(er)));return;}
@@ -2020,6 +2021,7 @@ async function coLoad(){
   try{CO.st=await rpc('courier_status',{});}catch(e){CO.err=errMsg(e);}
   if(CO.st&&CO.st.approved){
     try{const r=await Promise.all([rpc('courier_mine',{}),rpc('courier_wallet',{})]);CO.mine=r[0]||[];CO.wal=r[1];}catch(e){CO.err=errMsg(e);}
+    try{CO.online=await rpc('courier_online',{});}catch(e){}
     await coAvail();
   }
   coWatch();render();}
@@ -2076,7 +2078,7 @@ function viewCourier(){
     ${mine.length?`<div style="margin-top:10px;display:grid;gap:6px">${mine.map(x=>`<div class="row sp"><span class="num">${money(x.amount)}</span><span class="pill s-${x.status}">${WSTATUS[x.status]}</span></div>`).join('')}</div>`:''}</div></section>`;}
   if(t==='mine'){const act=CO.mine.filter(x=>x.status!=='delivered'),dn=CO.mine.filter(x=>x.status==='delivered');
     return `<section>${act.length?act.map(coMine).join(''):'<div class="empty">مفيش أوردرات معاك دلوقتي. شوف تاب "قريب مني".</div>'}</section>${dn.length?`<section><h2>اتسلّمت</h2>${dn.slice(0,20).map(coMine).join('')}</section>`:''}`;}
-  return `<section><div class="card plain"><div class="row sp"><span>${CO.pos?'📍 موقعك متحدد · الأقرب أولاً':'📍 حدّد موقعك عشان نرتّب الأقرب ليك'}</span><button class="btn alt sm" data-act="cogps">${CO.pos?'🔄 حدّث موقعي':'حدّد موقعي'}</button></div>${CO.gerr&&!CO.pos?`<div class="hint" style="color:#a33">${esc(CO.gerr)}</div>`:''}${CO.err?`<div class="hint" style="color:#a33">${esc(CO.err)}</div>`:''}</div>
+  return `<section><div class="card plain"><div class="row sp"><b>${CO.online===false?'⛔ إنت غير متاح (مش بتظهرلك أوردرات)':'✅ إنت متاح لاستلام الأوردرات'}</b><button class="btn ${CO.online===false?'':'alt'} sm" data-act="coonline">${CO.online===false?'ارجع متاح':'وقّف استلام الأوردرات'}</button></div></div><div class="card plain"><div class="row sp"><span>${CO.pos?'📍 موقعك متحدد · الأقرب أولاً':'📍 حدّد موقعك عشان نرتّب الأقرب ليك'}</span><button class="btn alt sm" data-act="cogps">${CO.pos?'🔄 حدّث موقعي':'حدّد موقعي'}</button></div>${CO.gerr&&!CO.pos?`<div class="hint" style="color:#a33">${esc(CO.gerr)}</div>`:''}${CO.err?`<div class="hint" style="color:#a33">${esc(CO.err)}</div>`:''}</div>
    ${CO.avail.length?CO.avail.map(coCard).join(''):'<div class="empty">مفيش أوردرات متاحة دلوقتي. بنحدّث تلقائي كل نص دقيقة.</div>'}</section>`;}
 
 function merchLocHTML(){
@@ -2402,9 +2404,9 @@ if('serviceWorker' in navigator&&location.protocol==='https:')window.addEventLis
 setTimeout(()=>{loadGb().then(()=>render());},800);setInterval(()=>{loadGb().then(()=>{if(!ui.modal&&ui.view==='customer')render();});},60000);
 if(DEEP_S)rpc('get_store',{p_slug:DEEP_S}).then(r=>{V3.store=r||{};render();}).catch(()=>{V3.store={};render();});
 const RT={rat:{},lb:[],ver:[]};
-let _lx=0;async function loadExtras(){if(Date.now()-_lx<60000&&_lx)return;_lx=Date.now();try{const [a,b,c]=await Promise.all([rpc('product_ratings',{}),rpc('leaderboard',{}),rpc('verified_list',{})]);RT.rat=a||{};RT.lb=b||[];RT.ver=c||[];}catch(e){}}
+let _lx=0;async function loadExtras(){if(Date.now()-_lx<60000&&_lx)return;_lx=Date.now();try{const [a,b,c]=await Promise.all([rpc('product_ratings',{}),rpc('leaderboard',{}),rpc('verified_list',{})]);RT.rat=a||{};RT.lb=b||[];RT.ver=c||[];try{RT.trust=(await rpc('trusted_merchants',{}))||[];}catch(e){}}catch(e){}}
 function starsHTML(pid){const r=RT.rat[pid];return r?`<span class="hint" title="تقييم">⭐ ${r.avg} (${r.n})</span>`:'';}
-function vbadge(m){return RT.ver.includes(m)?' <span title="تاجر موثّق" style="color:#17878a">✔ موثّق</span>':'';}
+function vbadge(m){return (RT.ver.includes(m)?' <span title="تاجر موثّق" style="color:#17878a">✔ موثّق</span>':'')+((RT.trust||[]).includes(m)?' <span title="10 أوردرات متسلّمة أو أكتر ومرتجعات قليلة" style="color:#b8860b">⭐ موثوق</span>':'');}
 function tierOf(n){return n>=100?['💎 ماسي',100]:n>=30?['🥇 ذهبي',30]:n>=10?['🥈 فضي',10]:n>=1?['🥉 برونزي',1]:['🌱 مبتدئ',0];}
 function lbHTML(){return RT.lb.length?`<div class="card plain" style="margin:10px 0"><b>🏆 أفضل المسوّقين</b>${RT.lb.map((x,i)=>`<div class="row sp" style="padding:3px 0"><span>${i+1}. ${esc(x.name)} ${tierOf(x.n)[0]}</span><b class="num">${x.n} طلب</b></div>`).join('')}</div>`:'';}
 async function refreshNow(){
